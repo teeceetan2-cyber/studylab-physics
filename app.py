@@ -125,7 +125,7 @@ elif topic == "Snell's Law (Refraction)":
     fig.add_annotation(x=x1/2, y=y1/2, text=f"θ₁={theta1}°", showarrow=False,
                        font=dict(color="#f59e0b"))
 
-    if theta2:
+    if theta2 is not None:
         x2 = 2 * math.sin(math.radians(theta2))
         y2 = -2 * math.cos(math.radians(theta2))
         fig.add_trace(go.Scatter(x=[0, x2], y=[0, y2], mode="lines",
