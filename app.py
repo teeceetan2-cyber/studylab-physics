@@ -263,45 +263,57 @@ elif topic == "Momentum & Collisions":
                 unsafe_allow_html=True,
             )
 
-            # Vector diagram
-            s = max(v1, v2, v1p, v2p, 1) * 1.5
-            v1_vec = np.array([v1 * math.cos(t1_r), v1 * math.sin(t1_r)])
-            v2_vec = np.array([v2 * math.cos(t2_r), v2 * math.sin(t2_r)])
-            v1p_vec = np.array([v1px, v1py])
-            v2p_vec = np.array([v2px, v2py])
+            # Vector diagram — before arrows point TOWARD origin, after point AWAY
+            v1_before = np.array([v1 * math.cos(t1_r), v1 * math.sin(t1_r)])
+            v2_before = np.array([v2 * math.cos(t2_r), v2 * math.sin(t2_r)])
+            v1_after = np.array([v1px, v1py])
+            v2_after = np.array([v2px, v2py])
+
+            max_r = max(abs(v1), abs(v2), abs(v1p), abs(v2p), 1) * 1.5
 
             fig = go.Figure()
-            # Before: v1
-            fig.add_trace(go.Scatter(x=[0, v1_vec[0]], y=[0, v1_vec[1]],
-                                      mode="lines+text",
-                                      line=dict(color="#6366f1", width=3),
-                                      text=["", f"v₁ ({v1:.1f})"], textposition="middle right",
-                                      name="Before: Ball 1"))
-            # Before: v2
-            if v2 > 0.1:
-                fig.add_trace(go.Scatter(x=[0, v2_vec[0]], y=[0, v2_vec[1]],
-                                          mode="lines+text",
-                                          line=dict(color="#ef4444", width=2),
-                                          text=["", f"v₂ ({v2:.1f})"], textposition="middle right",
-                                          name="Before: Ball 2"))
-            # After: v1'
-            fig.add_trace(go.Scatter(x=[0, v1p_vec[0]], y=[0, v1p_vec[1]],
-                                      mode="lines+text",
-                                      line=dict(color="#f59e0b", width=3, dash="dash"),
-                                      text=["", f"v\'₁ ({v1p:.2f})"], textposition="middle right",
-                                      name="After: Ball 1"))
-            # After: v2'
-            fig.add_trace(go.Scatter(x=[0, v2p_vec[0]], y=[0, v2p_vec[1]],
-                                      mode="lines+text",
-                                      line=dict(color="#22d3ee", width=3, dash="dash"),
-                                      text=["", f"v\'₂ ({v2p:.2f})"], textposition="middle right",
-                                      name="After: Ball 2"))
+            # Collision point marker
+            fig.add_trace(go.Scatter(
+                x=[0], y=[0], mode="markers",
+                marker=dict(size=8, color="white", line=dict(color="#888", width=1)),
+                showlegend=False, name="Collision"))
+            # Before: v1 (mirrored — tail opposite, arrowhead at origin)
+            fig.add_trace(go.Scatter(
+                x=[-v1_before[0], 0], y=[-v1_before[1], 0],
+                mode="lines+text",
+                line=dict(color="#6366f1", width=3),
+                text=[f"v₁ ({v1:.1f})", ""], textposition="middle left",
+                name="Before: Ball 1"))
+            # Before: v2 (mirrored)
+            if abs(v2) > 0.1:
+                fig.add_trace(go.Scatter(
+                    x=[-v2_before[0], 0], y=[-v2_before[1], 0],
+                    mode="lines+text",
+                    line=dict(color="#ef4444", width=2),
+                    text=[f"v₂ ({v2:.1f})", ""], textposition="middle left",
+                    name="Before: Ball 2"))
+            # After: v1' (from origin outward)
+            fig.add_trace(go.Scatter(
+                x=[0, v1_after[0]], y=[0, v1_after[1]],
+                mode="lines+markers+text",
+                line=dict(color="#f59e0b", width=3, dash="dash"),
+                marker=dict(size=7, symbol="circle", color="#f59e0b"),
+                text=["", f"v\'₁ ({v1p:.2f})"], textposition="middle right",
+                name="After: Ball 1"))
+            # After: v2' (from origin outward)
+            fig.add_trace(go.Scatter(
+                x=[0, v2_after[0]], y=[0, v2_after[1]],
+                mode="lines+markers+text",
+                line=dict(color="#22d3ee", width=3, dash="dash"),
+                marker=dict(size=7, symbol="circle", color="#22d3ee"),
+                text=["", f"v\'₂ ({v2p:.2f})"], textposition="middle right",
+                name="After: Ball 2"))
 
             fig.add_hline(y=0, line=dict(color="#555", width=1, dash="dot"))
             fig.add_vline(x=0, line=dict(color="#555", width=1, dash="dot"))
             fig.update_layout(height=400,
-                              xaxis=dict(range=[-s, s], scaleanchor="y", constrain="domain"),
-                              yaxis=dict(range=[-s, s]),
+                              xaxis=dict(range=[-max_r, max_r], scaleanchor="y", constrain="domain"),
+                              yaxis=dict(range=[-max_r, max_r]),
                               margin=dict(l=20, r=80, t=20, b=20),
                               legend=dict(orientation="h", y=1.02))
             st.plotly_chart(fig, use_container_width=True)
