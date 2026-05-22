@@ -105,11 +105,30 @@ elif topic == "Kinematics":
         s_ylim = st.slider("Displacement axis range ±", 5.0, 2000.0,
                            max(20.0, float(np.ceil(max_s / 50) * 50)), 5.0)
 
+    # Time marker — vertical line across both plots
+    t_mark = st.slider("Time marker (s)", 0.0, t_max, t_max, 0.1)
+    v_mark = u + a_val * t_mark
+    s_mark = u * t_mark + 0.5 * a_val * t_mark**2
+
     fig.update_layout(height=500, margin=dict(l=20, r=20, t=30, b=20), showlegend=False)
     fig.update_yaxes(range=[-v_ylim, v_ylim], row=1, col=1)
     fig.update_yaxes(range=[-s_ylim, s_ylim], row=2, col=1)
-    fig.update_xaxes(title_text="Time (s)", row=2, col=1)
+    fig.update_xaxes(title_text="Time (s)", row=2, col=1,
+                      range=[0, t_max * 1.05])
+    # Vertical marker lines on both subplots
+    fig.add_vline(x=t_mark, line=dict(color="#ef4444", width=2, dash="dash"),
+                  row=1, col=1)
+    fig.add_vline(x=t_mark, line=dict(color="#ef4444", width=2, dash="dash"),
+                  row=2, col=1)
     st.plotly_chart(fig, use_container_width=True)
+
+    st.markdown(
+        f'<div class="result-box">'
+        f'<strong>At t = {t_mark:.1f} s:</strong><br>'
+        f'v = {v_mark:.2f} m/s &nbsp;|&nbsp; s = {s_mark:.2f} m'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
 
 # ── Momentum & Collisions ────────────────────────────────
 elif topic == "Momentum & Collisions":
