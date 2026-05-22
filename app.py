@@ -224,12 +224,30 @@ elif topic == "Momentum & Collisions":
             discriminant = B**2 - 4 * A * C
 
             if discriminant >= 0:
-                v1p = (-B - math.sqrt(discriminant)) / (2 * A)
-                # Take the other root if this one is negative
-                if v1p < 0:
-                    v1p = (-B + math.sqrt(discriminant)) / (2 * A)
-                if v1p < 0:
-                    v1p = 0.0
+                sqrtD = math.sqrt(discriminant)
+                v1_small = (-B - sqrtD) / (2 * A)
+                v1_large = (-B + sqrtD) / (2 * A)
+
+                # Pick the physical root:
+                # For m₁ > m₂: smaller (positive) root = ball slows down
+                # For m₁ < m₂: negative root = ball bounces back
+                # For m₁ ≈ m₂ and v₂=0: v₁_small=0 is non-physical for φ₁≠0
+                near_equal_mass = abs(m1 - m2) / max(m1, m2) < 0.05 if max(m1, m2) > 0 else False
+
+                if v1_small >= 0:
+                    # Equal/near-equal masses: v₁'=0 is correct only for head-on
+                    # (θ₁≈φ₁, ball barely deflects). For glancing, take v₁·cos(θ₁-φ₁).
+                    same_direction = abs(math.cos(t1_r - p1_r) - 1.0) < 0.01
+                    if abs(v1_small) < 0.001 and abs(v1_large) > 0.5 and near_equal_mass and not same_direction:
+                        v1p = v1_large
+                    else:
+                        v1p = v1_small
+                else:
+                    # v₁_small < 0 → m₁ < m₂, ball bounces back (keep negative)
+                    v1p = v1_small
+
+                if v1p < -abs(v1) - abs(v2) - 1:
+                    v1p = 0.0  # sanity clamp
             else:
                 st.warning("No valid elastic collision for this deflection angle. Try a smaller |φ₁|.")
                 v1p = -1
