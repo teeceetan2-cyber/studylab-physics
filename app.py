@@ -94,7 +94,20 @@ elif topic == "Kinematics":
     fig.add_trace(go.Scatter(x=t, y=v, line=dict(color="#6366f1", width=2), name="v(t)"), row=1, col=1)
     fig.add_trace(go.Scatter(x=t, y=s, line=dict(color="#10b981", width=2), name="s(t)"), row=2, col=1)
     fig.add_hline(y=0, line=dict(color="#555", width=1, dash="dash"), row=1, col=1)
+    max_v = max(abs(v.min()), abs(v.max()))
+    max_s = max(abs(s.min()), abs(s.max()))
+
+    col1, col2 = st.columns(2)
+    with col1:
+        v_ylim = st.slider("Velocity axis range ±", 5.0, 500.0,
+                           max(20.0, float(np.ceil(max_v / 10) * 10)), 5.0)
+    with col2:
+        s_ylim = st.slider("Displacement axis range ±", 5.0, 2000.0,
+                           max(20.0, float(np.ceil(max_s / 50) * 50)), 5.0)
+
     fig.update_layout(height=500, margin=dict(l=20, r=20, t=30, b=20), showlegend=False)
+    fig.update_yaxes(range=[-v_ylim, v_ylim], row=1, col=1)
+    fig.update_yaxes(range=[-s_ylim, s_ylim], row=2, col=1)
     fig.update_xaxes(title_text="Time (s)", row=2, col=1)
     st.plotly_chart(fig, use_container_width=True)
 
