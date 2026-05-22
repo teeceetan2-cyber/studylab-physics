@@ -188,12 +188,12 @@ elif topic == "Momentum & Collisions":
 
         col1, col2 = st.columns(2)
         with col1:
-            m1 = st.slider("m₁ (kg)", 0.5, 10.0, 2.0, 0.1, key="mom2d_m1")
-            m2 = st.slider("m₂ (kg)", 0.5, 10.0, 1.0, 0.1, key="mom2d_m2")
+            m1 = st.slider("m₁ (kg)", 0.5, 10.0, 3.0, 0.1, key="mom2d_m1")
+            m2 = st.slider("m₂ (kg)", 0.5, 10.0, 2.0, 0.1, key="mom2d_m2")
             v1 = st.slider("|v₁| (m/s)", 1.0, 20.0, 5.0, 0.5, key="mom2d_v1")
         with col2:
             theta = st.slider("Approach angle θ (° from +x)", -89, 89, 30, 1, key="mom2d_th")
-            phi1 = st.slider("Ball 1 deflection φ₁ (°)", -89, 89, -20, 1, key="mom2d_p1")
+            phi1 = st.slider("Ball 1 deflection φ₁ (°)", -89, 89, 10, 1, key="mom2d_p1")
 
         # Elastic: solve for v2' and phi2 using conservation
         th_r = math.radians(theta)
@@ -221,9 +221,11 @@ elif topic == "Momentum & Collisions":
 
         cos_diff = math.cos(th_r - p1_r)
 
-        A = m1 * (m1 + m2)
-        B = -2 * m1 * m2 * v1 * cos_diff
-        C = m1 * m2 * v1**2 - m1**2 * v1**2
+        # Derived from energy + momentum conservation:
+        # (m₁+m₂)v₁'² - 2m₁v₁cos(θ-φ₁)v₁' + (m₁-m₂)v₁² = 0
+        A = m1 + m2
+        B = -2 * m1 * v1 * cos_diff
+        C = (m1 - m2) * v1**2
 
         discriminant = B**2 - 4 * A * C
 
