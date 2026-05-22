@@ -190,13 +190,13 @@ elif topic == "Momentum & Collisions":
         with col1:
             st.markdown("**Ball 1**")
             m1 = st.slider("m₁ (kg)", 0.5, 10.0, 3.0, 0.1, key="mom2d_m1")
-            v1 = st.slider("v₁ (m/s)", 0.0, 20.0, 5.0, 0.5, key="mom2d_v1")
+            v1 = st.slider("v₁ (m/s, negative = opposite direction)", -20.0, 20.0, 5.0, 0.5, key="mom2d_v1")
             theta1 = st.slider("θ₁ (° from +x)", -179, 180, 0, 1, key="mom2d_th1")
             phi1 = st.slider("φ₁ (°) — deflection of ball 1", -89, 89, 15, 1, key="mom2d_phi1")
         with col2:
             st.markdown("**Ball 2**")
             m2 = st.slider("m₂ (kg)", 0.5, 10.0, 2.0, 0.1, key="mom2d_m2")
-            v2 = st.slider("v₂ (m/s)", 0.0, 20.0, 0.0, 0.5, key="mom2d_v2")
+            v2 = st.slider("v₂ (m/s, negative = opposite direction)", -20.0, 20.0, 0.0, 0.5, key="mom2d_v2")
             theta2 = st.slider("θ₂ (° from +x)", -179, 180, 0, 1, key="mom2d_th2")
 
         # Convert to radians
@@ -208,7 +208,7 @@ elif topic == "Momentum & Collisions":
         px = m1 * v1 * math.cos(t1_r) + m2 * v2 * math.cos(t2_r)
         py = m1 * v1 * math.sin(t1_r) + m2 * v2 * math.sin(t2_r)
 
-        if v1 == 0 and v2 == 0:
+        if abs(v1) < 0.001 and abs(v2) < 0.001:
             st.warning("Both balls are stationary — no collision.")
             v1p, v2p = 0, 0
         else:
@@ -234,7 +234,7 @@ elif topic == "Momentum & Collisions":
                 st.warning("No valid elastic collision for this deflection angle. Try a smaller |φ₁|.")
                 v1p = -1
 
-        if v1p >= 0 and (v1 > 0 or v2 > 0):
+        if v1p >= 0 and (abs(v1) > 0.001 or abs(v2) > 0.001):
             # Compute v₂' components and φ₂
             v1px = v1p * math.cos(p1_r)
             v1py = v1p * math.sin(p1_r)
