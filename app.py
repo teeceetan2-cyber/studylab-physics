@@ -29,7 +29,7 @@ category = st.sidebar.selectbox("Category", [
 ])
 
 topic_map = {
-    "🎯 Mechanics": ["Projectile Motion", "Kinematics"],
+    "🎯 Mechanics": ["Projectile Motion", "Kinematics", "Momentum & Collisions"],
     "💡 Optics": ["Snell's Law (Refraction)"],
     "⚡ Electricity": ["Ohm's Law"],
     "🔄 Oscillations": ["Simple Pendulum"],
@@ -97,6 +97,278 @@ elif topic == "Kinematics":
     fig.update_layout(height=500, margin=dict(l=20, r=20, t=30, b=20), showlegend=False)
     fig.update_xaxes(title_text="Time (s)", row=2, col=1)
     st.plotly_chart(fig, use_container_width=True)
+
+# ── Momentum & Collisions ────────────────────────────────
+elif topic == "Momentum & Collisions":
+    st.markdown("## Momentum & Collisions")
+    st.latex(r"p = mv \qquad \text{Conservation: } \sum p_{\text{before}} = \sum p_{\text{after}}")
+
+    mode = st.radio("Mode", ["1D Collision (Straight Line)", "2D Collision (With Angle)",
+                             "Types of Collisions"], horizontal=True)
+
+    if mode == "1D Collision (Straight Line)":
+        st.markdown("### 1D Collision")
+        st.latex(r"m_1 u_1 + m_2 u_2 = m_1 v_1 + m_2 v_2")
+
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.markdown("**Object 1**")
+            m1 = st.slider("m₁ (kg)", 0.5, 20.0, 3.0, 0.1, key="mom_m1")
+            u1 = st.slider("u₁ (m/s)", -20.0, 20.0, 5.0, 0.5, key="mom_u1")
+        with col2:
+            st.markdown("**Object 2**")
+            m2 = st.slider("m₂ (kg)", 0.5, 20.0, 1.0, 0.1, key="mom_m2")
+            u2 = st.slider("u₂ (m/s)", -20.0, 20.0, 0.0, 0.5, key="mom_u2")
+        with col3:
+            st.markdown("**Coefficient of Restitution**")
+            e = st.slider("e", 0.0, 1.0, 1.0, 0.01, key="mom_e")
+
+        # Final velocities
+        total_mass = m1 + m2
+        v1 = (m1 * u1 + m2 * u2 - m2 * e * (u1 - u2)) / total_mass
+        v2 = (m1 * u1 + m2 * u2 + m1 * e * (u1 - u2)) / total_mass
+
+        p_before = m1 * u1 + m2 * u2
+        p_after = m1 * v1 + m2 * v2
+
+        ke_before = 0.5 * m1 * u1**2 + 0.5 * m2 * u2**2
+        ke_after = 0.5 * m1 * v1**2 + 0.5 * m2 * v2**2
+        ke_loss = ((ke_before - ke_after) / ke_before * 100) if ke_before > 0 else 0
+
+        # Collision type
+        if abs(e - 1.0) < 0.001:
+            ctype = "🟢 Perfectly Elastic"
+        elif abs(e) < 0.001:
+            ctype = "🔴 Perfectly Inelastic (stick together)"
+        else:
+            ctype = "🟡 Partially Inelastic"
+
+        st.markdown(
+            f'<div class="result-box">'
+            f'<strong>{ctype}</strong> (e = {e:.2f})<br>'
+            f'<strong>v₁</strong> = {v1:.3f} m/s &nbsp;|&nbsp; '
+            f'<strong>v₂</strong> = {v2:.3f} m/s<br>'
+            f'<strong>p_before</strong> = {p_before:.3f} kg·m/s &nbsp;|&nbsp; '
+            f'<strong>p_after</strong> = {p_after:.3f} kg·m/s<br>'
+            f'<strong>KE before</strong> = {ke_before:.3f} J &nbsp;|&nbsp; '
+            f'<strong>KE after</strong> = {ke_after:.3f} J '
+            f'({"↘ lost" if ke_loss > 0.5 else "≈ conserved"} {ke_loss:.1f}%)'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+
+        # Bar chart: momentum before vs after
+        labels = [
+            f"Object 1<br>(m₁={m1:.1f}kg, u₁={u1:.1f})",
+            f"Object 2<br>(m₂={m2:.1f}kg, u₂={u2:.1f})",
+            f"Object 1<br>(v₁={v1:.2f})",
+            f"Object 2<br>(v₂={v2:.2f})",
+        ]
+        p_vals = [m1 * u1, m2 * u2, m1 * v1, m2 * v2]
+        colors = ["#6366f1", "#10b981", "#f59e0b", "#ef4444"]
+
+        fig = go.Figure()
+        fig.add_trace(go.Bar(x=["Before", "Before", "After", "After"],
+                              y=p_vals, marker_color=colors,
+                              text=[f"{v:.1f}" for v in p_vals],
+                              textposition="outside",
+                              hovertemplate="%{customdata}<br>p = %{y:.2f} kg·m/s",
+                              customdata=labels,
+                              showlegend=False))
+        fig.add_hline(y=0, line=dict(color="#555", width=1, dash="dot"))
+        fig.update_layout(height=350,
+                          yaxis_title="Momentum (kg·m/s)",
+                          margin=dict(l=20, r=20, t=10, b=20))
+        st.plotly_chart(fig, use_container_width=True)
+
+    elif mode == "2D Collision (With Angle)":
+        st.markdown("### 2D Elastic Collision")
+        st.markdown("Ball 1 moves toward stationary Ball 2. Conservation in x and y:")
+        st.latex(r"m_1\vec{v}_1 = m_1\vec{v}'_1 + m_2\vec{v}'_2")
+
+        col1, col2 = st.columns(2)
+        with col1:
+            m1 = st.slider("m₁ (kg)", 0.5, 10.0, 2.0, 0.1, key="mom2d_m1")
+            m2 = st.slider("m₂ (kg)", 0.5, 10.0, 1.0, 0.1, key="mom2d_m2")
+            v1 = st.slider("|v₁| (m/s)", 1.0, 20.0, 5.0, 0.5, key="mom2d_v1")
+        with col2:
+            theta = st.slider("Approach angle θ (° from +x)", -89, 89, 30, 1, key="mom2d_th")
+            phi1 = st.slider("Ball 1 deflection φ₁ (°)", -89, 89, -20, 1, key="mom2d_p1")
+
+        # Elastic: solve for v2' and phi2 using conservation
+        th_r = math.radians(theta)
+        p1_r = math.radians(phi1)
+
+        # Momentum components before
+        px_before = m1 * v1 * math.cos(th_r)
+        py_before = m1 * v1 * math.sin(th_r)
+
+        # After collision: unknown v1', v2', phi2
+        # We'll let user choose phi1, solve for v2' and phi2
+        # Elastic + momentum conservation
+        # Use quadratic in v1':
+        # From momentum x: m1*v1*cosθ = m1*v1'*cosφ1 + m2*v2'*cosφ2  → (1)
+        # From momentum y: m1*v1*sinθ = m1*v1'*sinφ1 + m2*v2'*sinφ2  → (2)
+        # From energy: m1*v1² = m1*v1'² + m2*v2'²  → (3)
+
+        # Square and add (1)+(2): (m1v1cosθ - m1v1'cosφ1)² + (m1v1sinθ - m1v1'sinφ1)² = (m2v2')²
+        # => m2²v2'² = m1²[v1² + v1'² - 2v1v1'(cosθcosφ1 + sinθsinφ1)]
+        # => m2²v2'² = m1²[v1² + v1'² - 2v1v1'cos(θ-φ1)]
+        # Substitute into energy: m1v1² = m1v1'² + m2*v2'²
+        # => m1(v1² - v1'²) = m1²/m2 * [v1² + v1'² - 2v1v1'cos(θ-φ1)]
+        # Multiply both sides by m2:
+        # m1*m2(v1² - v1'²) = m1²[v1² + v1'² - 2v1v1'cos(θ-φ1)]
+
+        cos_diff = math.cos(th_r - p1_r)
+
+        A = m1 * (m1 + m2)
+        B = -2 * m1 * m2 * v1 * cos_diff
+        C = m1 * m2 * v1**2 - m1**2 * v1**2
+
+        discriminant = B**2 - 4 * A * C
+
+        if discriminant >= 0:
+            v1p = (-B - math.sqrt(discriminant)) / (2 * A)  # Take the smaller root
+            v1p = max(0, v1p)
+
+            # Now find v2' and phi2 from momentum
+            px_after_1 = m1 * v1p * math.cos(p1_r)
+            py_after_1 = m1 * v1p * math.sin(p1_r)
+
+            px_2 = px_before - px_after_1
+            py_2 = py_before - py_after_1
+
+            v2p = math.sqrt(px_2**2 + py_2**2) / m2 if m2 > 0 else 0
+            phi2 = math.degrees(math.atan2(py_2, px_2)) if v2p > 0.01 else 0
+
+            p_before = math.sqrt(px_before**2 + py_before**2)
+            p_after = math.sqrt((m1*v1p*math.cos(p1_r) + m2*v2p*math.cos(math.radians(phi2)))**2 +
+                                (m1*v1p*math.sin(p1_r) + m2*v2p*math.sin(math.radians(phi2)))**2)
+
+            ke_before = 0.5 * m1 * v1**2
+            ke_after = 0.5 * m1 * v1p**2 + 0.5 * m2 * v2p**2
+            ke_loss = ((ke_before - ke_after) / ke_before * 100) if ke_before > 0 else 0
+
+            st.markdown(
+                f'<div class="result-box">'
+                f'<strong>After collision:</strong><br>'
+                f'Ball 1: |v\'₁| = {v1p:.3f} m/s, φ₁ = {phi1:.0f}°<br>'
+                f'Ball 2: |v\'₂| = {v2p:.3f} m/s, φ₂ = {phi2:.1f}°<br>'
+                f'KE {"↘ lost" if ke_loss > 0.5 else "≈ conserved"} ({ke_loss:.1f}%)'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+
+            # Vector diagram
+            s = max(v1, v1p, v2p) * 1.5
+            origin = np.array([0.0, 0.0])
+            v1_vec = np.array([v1 * math.cos(th_r), v1 * math.sin(th_r)])
+            v1p_vec = np.array([v1p * math.cos(p1_r), v1p * math.sin(p1_r)])
+            v2p_vec = np.array([v2p * math.cos(math.radians(phi2)), v2p * math.sin(math.radians(phi2))])
+
+            fig = go.Figure()
+            # Before: v1
+            fig.add_trace(go.Scatter(x=[0, v1_vec[0]], y=[0, v1_vec[1]],
+                                      mode="lines+text",
+                                      line=dict(color="#6366f1", width=3),
+                                      text=["", f"v₁ ({v1} m/s)"], textposition="middle right",
+                                      name="Before: Ball 1"))
+            # After: v1'
+            fig.add_trace(go.Scatter(x=[0, v1p_vec[0]], y=[0, v1p_vec[1]],
+                                      mode="lines+text",
+                                      line=dict(color="#f59e0b", width=3, dash="dash"),
+                                      text=["", f"v\'₁ ({v1p:.2f})"], textposition="middle right",
+                                      name="After: Ball 1"))
+            # After: v2'
+            fig.add_trace(go.Scatter(x=[0, v2p_vec[0]], y=[0, v2p_vec[1]],
+                                      mode="lines+text",
+                                      line=dict(color="#ef4444", width=3, dash="dash"),
+                                      text=["", f"v\'₂ ({v2p:.2f})"], textposition="middle right",
+                                      name="After: Ball 2"))
+
+            fig.add_hline(y=0, line=dict(color="#555", width=1, dash="dot"))
+            fig.add_vline(x=0, line=dict(color="#555", width=1, dash="dot"))
+            fig.update_layout(height=400,
+                              xaxis=dict(range=[-s, s], scaleanchor="y", constrain="domain"),
+                              yaxis=dict(range=[-s, s]),
+                              margin=dict(l=20, r=80, t=20, b=20),
+                              legend=dict(orientation="h", y=1.02))
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.warning("No valid 2D elastic collision for these parameters. Try a different deflection angle.")
+
+    elif mode == "Types of Collisions":
+        st.markdown("### Types of Collisions")
+        st.latex(r"e = \frac{\text{relative speed after}}{\text{relative speed before}} = \frac{v_2 - v_1}{u_1 - u_2}")
+
+        col1, col2 = st.columns(2)
+        with col1:
+            m1 = st.slider("m₁ (kg)", 0.5, 10.0, 3.0, 0.1, key="type_m1")
+            u1 = st.slider("u₁ (m/s)", 1.0, 20.0, 5.0, 0.5, key="type_u1")
+        with col2:
+            m2 = st.slider("m₂ (kg)", 0.5, 10.0, 3.0, 0.1, key="type_m2")
+            u2 = st.slider("u₂ (m/s)", -10.0, 10.0, 0.0, 0.5, key="type_u2")
+
+        total_mass = m1 + m2
+        p_total = m1 * u1 + m2 * u2
+        ke0 = 0.5 * m1 * u1**2 + 0.5 * m2 * u2**2
+
+        rows = []
+        for e_val, label in [(1.0, "🟢 Elastic"), (0.5, "🟡 Partially Inelastic"), (0.0, "🔴 Perfectly Inelastic")]:
+            v1f = (p_total - m2 * e_val * (u1 - u2)) / total_mass
+            v2f = (p_total + m1 * e_val * (u1 - u2)) / total_mass
+            p_final = m1 * v1f + m2 * v2f
+            ke_final = 0.5 * m1 * v1f**2 + 0.5 * m2 * v2f**2
+            ke_pct = ((ke0 - ke_final) / ke0 * 100) if ke0 > 0 else 0
+
+            stick = (abs(v1f - v2f) < 0.001)
+            rows.append(
+                f"<tr>"
+                f"<td style='padding:6px 10px'><b>{label}</b></td>"
+                f"<td style='text-align:center'>{e_val}</td>"
+                f"<td style='text-align:center'>{v1f:.3f}</td>"
+                f"<td style='text-align:center'>{v2f:.3f}</td>"
+                f"<td style='text-align:center'>{'Yes' if stick else 'No'}</td>"
+                f"<td style='text-align:center'>{ke_pct:.1f}%</td>"
+                f"</tr>"
+            )
+
+        st.markdown(
+            f'<table style="width:100%; border-collapse:collapse">'
+            f'<tr style="background:#1a1a2e; border-bottom:1px solid #333">'
+            f'<th style="padding:8px 10px; text-align:left">Type</th>'
+            f'<th style="padding:8px 10px">e</th>'
+            f'<th style="padding:8px 10px">v₁ (m/s)</th>'
+            f'<th style="padding:8px 10px">v₂ (m/s)</th>'
+            f'<th style="padding:8px 10px">Stick?</th>'
+            f'<th style="padding:8px 10px">KE lost</th>'
+            f'</tr>'
+            + ''.join(rows) +
+            f'</table>',
+            unsafe_allow_html=True,
+        )
+
+        # Bar chart comparing KE
+        labels = ["Elastic (e=1)", "Partially Inelastic (e=0.5)", "Perfectly Inelastic (e=0)"]
+        ke_vals = []
+        for e_val in [1.0, 0.5, 0.0]:
+            v1f = (p_total - m2 * e_val * (u1 - u2)) / total_mass
+            v2f = (p_total + m1 * e_val * (u1 - u2)) / total_mass
+            ke_vals.append(0.5 * m1 * v1f**2 + 0.5 * m2 * v2f**2)
+
+        fig = go.Figure()
+        fig.add_trace(go.Bar(x=labels, y=[ke0, ke0, ke0],
+                              marker_color="#333", opacity=0.4,
+                              name="KE before", showlegend=True))
+        fig.add_trace(go.Bar(x=labels, y=ke_vals,
+                              marker_color=["#10b981", "#f59e0b", "#ef4444"],
+                              name="KE after", showlegend=True))
+        fig.update_layout(height=350,
+                          yaxis_title="Kinetic Energy (J)",
+                          barmode="overlay",
+                          margin=dict(l=20, r=20, t=10, b=20))
+        st.plotly_chart(fig, use_container_width=True)
+        st.caption("Overlay bars: dark = KE before, colored = KE after")
 
 # ── Snell's Law ──────────────────────────────────────────
 elif topic == "Snell's Law (Refraction)":
