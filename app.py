@@ -182,110 +182,83 @@ elif topic == "Momentum & Collisions":
         st.plotly_chart(fig, use_container_width=True)
 
     elif mode == "2D Collision (With Angle)":
-        st.markdown("### 2D Elastic Collision — Center-of-Mass Frame")
-        st.markdown("Both balls are adjustable. The scattering angle χ controls how glancing the collision is.")
-        st.latex(r"\vec{V}_{\text{CM}} = \frac{m_1\vec{v}_1 + m_2\vec{v}_2}{m_1+m_2}")
+        st.markdown("### 2D Elastic Collision")
+        st.markdown("Both balls adjustable. Set φ₁ (ball 1's deflection) — φ₂ is calculated.")
+        st.latex(r"m_1\vec{v}_1 + m_2\vec{v}_2 = m_1\vec{v}'_1 + m_2\vec{v}'_2")
 
         col1, col2 = st.columns(2)
         with col1:
             st.markdown("**Ball 1**")
             m1 = st.slider("m₁ (kg)", 0.5, 10.0, 3.0, 0.1, key="mom2d_m1")
-            v1 = st.slider("|v₁| (m/s)", 0.0, 20.0, 5.0, 0.5, key="mom2d_v1")
+            v1 = st.slider("v₁ (m/s)", 0.0, 20.0, 5.0, 0.5, key="mom2d_v1")
             theta1 = st.slider("θ₁ (° from +x)", -179, 180, 0, 1, key="mom2d_th1")
+            phi1 = st.slider("φ₁ (°) — deflection of ball 1", -89, 89, 15, 1, key="mom2d_phi1")
         with col2:
             st.markdown("**Ball 2**")
             m2 = st.slider("m₂ (kg)", 0.5, 10.0, 2.0, 0.1, key="mom2d_m2")
-            v2 = st.slider("|v₂| (m/s)", 0.0, 20.0, 0.0, 0.5, key="mom2d_v2")
+            v2 = st.slider("v₂ (m/s)", 0.0, 20.0, 0.0, 0.5, key="mom2d_v2")
             theta2 = st.slider("θ₂ (° from +x)", -179, 180, 0, 1, key="mom2d_th2")
-
-        chi = st.slider("Scattering angle χ (°) — glancing → head-on", 0, 180, 90, 1, key="mom2d_chi")
 
         # Convert to radians
         t1_r = math.radians(theta1)
         t2_r = math.radians(theta2)
-        chi_r = math.radians(chi)
+        p1_r = math.radians(phi1)
 
-        # Initial momentum & CM velocity
-        px_total = m1 * v1 * math.cos(t1_r) + m2 * v2 * math.cos(t2_r)
-        py_total = m1 * v1 * math.sin(t1_r) + m2 * v2 * math.sin(t2_r)
-        total_mass = m1 + m2
-        Vx = px_total / total_mass
-        Vy = py_total / total_mass
-
-        # Velocities in CM frame
-        u1x = v1 * math.cos(t1_r) - Vx
-        u1y = v1 * math.sin(t1_r) - Vy
+        # Initial total momentum components
+        px = m1 * v1 * math.cos(t1_r) + m2 * v2 * math.cos(t2_r)
+        py = m1 * v1 * math.sin(t1_r) + m2 * v2 * math.sin(t2_r)
 
         if v1 == 0 and v2 == 0:
             st.warning("Both balls are stationary — no collision.")
-        elif abs(u1x) < 1e-12 and abs(u1y) < 1e-12:
-            # Already in CM frame, collinear — treat as 1D
-            st.info("Special case: both balls moving together at same velocity (no relative motion).")
-            v1p, phi1, v2p, phi2 = v1, theta1, v2, theta2
-            ke_before = 0.5*m1*v1**2 + 0.5*m2*v2**2
-            ke_after = ke_before
-            st.markdown(
-                f'<div class="result-box">'
-                f'<strong>No deflection — balls maintain course.</strong><br>'
-                f'Ball 1: v₁ = {v1:.2f} m/s, φ₁ = {theta1:.0f}°<br>'
-                f'Ball 2: v₂ = {v2:.2f} m/s, φ₂ = {theta2:.0f}°<br>'
-                f'KE conserved (elastic)'
-                f'</div>',
-                unsafe_allow_html=True,
-            )
-            # Still draw the diagram
-            s = max(v1, v2, 1) * 1.5
-            v1_vec = np.array([v1*math.cos(t1_r), v1*math.sin(t1_r)])
-            v2_vec = np.array([v2*math.cos(t2_r), v2*math.sin(t2_r)])
-            fig = go.Figure()
-            fig.add_trace(go.Scatter(x=[0, v1_vec[0]], y=[0, v1_vec[1]], mode="lines+text",
-                                      line=dict(color="#6366f1", width=3),
-                                      text=["", f"v₁ ({v1:.1f})"], textposition="middle right",
-                                      name="Ball 1"))
-            if v2 > 0.01:
-                fig.add_trace(go.Scatter(x=[0, v2_vec[0]], y=[0, v2_vec[1]], mode="lines+text",
-                                          line=dict(color="#ef4444", width=3),
-                                          text=["", f"v₂ ({v2:.1f})"], textposition="middle right",
-                                          name="Ball 2"))
-            fig.add_hline(y=0, line=dict(color="#555", width=1, dash="dot"))
-            fig.add_vline(x=0, line=dict(color="#555", width=1, dash="dot"))
-            fig.update_layout(height=400,
-                              xaxis=dict(range=[-s, s], scaleanchor="y", constrain="domain"),
-                              yaxis=dict(range=[-s, s]),
-                              margin=dict(l=20, r=80, t=20, b=20))
-            st.plotly_chart(fig, use_container_width=True)
+            v1p, v2p = 0, 0
         else:
-            # Rotate u₁ by scattering angle χ in CM frame
-            u1px = u1x * math.cos(chi_r) - u1y * math.sin(chi_r)
-            u1py = u1x * math.sin(chi_r) + u1y * math.cos(chi_r)
+            # Quadratic in v₁' from momentum + energy conservation:
+            # (m₁+m₂)v₁'² - 2(px·cosφ₁ + py·sinφ₁)·v₁'
+            #   - [m₂v₁² + (m₂²v₂² - px² - py²)/m₁] = 0
+            S = px * math.cos(p1_r) + py * math.sin(p1_r)
 
-            # u₂' from momentum conservation in CM
-            u2px = -(m1 / m2) * u1px
-            u2py = -(m1 / m2) * u1py
+            A = m1 + m2
+            B = -2 * S
+            C = -(m2 * v1**2 + (m2**2 * v2**2 - px**2 - py**2) / m1)
 
-            # Transform back to lab frame
-            v1px = Vx + u1px
-            v1py = Vy + u1py
-            v2px = Vx + u2px
-            v2py = Vy + u2py
+            discriminant = B**2 - 4 * A * C
 
-            v1p = math.hypot(v1px, v1py)
-            v2p = math.hypot(v2px, v2py)
-            phi1 = math.degrees(math.atan2(v1py, v1px))
-            phi2 = math.degrees(math.atan2(v2py, v2px))
+            if discriminant >= 0:
+                v1p = (-B - math.sqrt(discriminant)) / (2 * A)
+                # Take the other root if this one is negative
+                if v1p < 0:
+                    v1p = (-B + math.sqrt(discriminant)) / (2 * A)
+                if v1p < 0:
+                    v1p = 0.0
+            else:
+                st.warning("No valid elastic collision for this deflection angle. Try a smaller |φ₁|.")
+                v1p = -1
+
+        if v1p >= 0 and (v1 > 0 or v2 > 0):
+            # Compute v₂' components and φ₂
+            v1px = v1p * math.cos(p1_r)
+            v1py = v1p * math.sin(p1_r)
+
+            px2 = px - m1 * v1px
+            py2 = py - m1 * v1py
+
+            v2p = math.hypot(px2, py2) / m2 if m2 > 0 else 0
+            v2px = px2 / m2
+            v2py = py2 / m2
+            phi2 = math.degrees(math.atan2(v2py, v2px)) if v2p > 0.001 else 0
 
             ke_before = 0.5 * m1 * v1**2 + 0.5 * m2 * v2**2
             ke_after = 0.5 * m1 * v1p**2 + 0.5 * m2 * v2p**2
 
-            # CM speed for reference
-            u1_mag = math.hypot(u1x, u1y)
-
+            # Velocity components shown signed for direction
             st.markdown(
                 f'<div class="result-box">'
                 f'<strong>After collision:</strong><br>'
-                f'Ball 1: |v\'₁| = {v1p:.3f} m/s, φ₁ = {phi1:.1f}°<br>'
-                f'Ball 2: |v\'₂| = {v2p:.3f} m/s, φ₂ = {phi2:.1f}°<br>'
-                f'V<sub>CM</sub> = ({Vx:.3f}, {Vy:.3f}) m/s'
+                f'Ball 1: v\'₁<sub>x</sub> = {v1px:+.3f}, v\'₁<sub>y</sub> = {v1py:+.3f} m/s '
+                f'(φ₁ = {phi1:.0f}°)<br>'
+                f'Ball 2: v\'₂<sub>x</sub> = {v2px:+.3f}, v\'₂<sub>y</sub> = {v2py:+.3f} m/s '
+                f'(φ₂ = {phi2:.1f}°)<br>'
+                f'KE conserved (elastic)'
                 f'</div>',
                 unsafe_allow_html=True,
             )
@@ -296,8 +269,6 @@ elif topic == "Momentum & Collisions":
             v2_vec = np.array([v2 * math.cos(t2_r), v2 * math.sin(t2_r)])
             v1p_vec = np.array([v1px, v1py])
             v2p_vec = np.array([v2px, v2py])
-            # CM vector
-            Vcm_vec = np.array([Vx, Vy])
 
             fig = go.Figure()
             # Before: v1
@@ -325,11 +296,6 @@ elif topic == "Momentum & Collisions":
                                       line=dict(color="#22d3ee", width=3, dash="dash"),
                                       text=["", f"v\'₂ ({v2p:.2f})"], textposition="middle right",
                                       name="After: Ball 2"))
-            # CM velocity
-            fig.add_trace(go.Scatter(x=[0, Vcm_vec[0]], y=[0, Vcm_vec[1]],
-                                      mode="lines",
-                                      line=dict(color="#888", width=1.5, dash="dot"),
-                                      name=f"V_CM ({Vx:.2f}, {Vy:.2f})"))
 
             fig.add_hline(y=0, line=dict(color="#555", width=1, dash="dot"))
             fig.add_vline(x=0, line=dict(color="#555", width=1, dash="dot"))
@@ -339,14 +305,6 @@ elif topic == "Momentum & Collisions":
                               margin=dict(l=20, r=80, t=20, b=20),
                               legend=dict(orientation="h", y=1.02))
             st.plotly_chart(fig, use_container_width=True)
-
-            st.markdown("### How it works")
-            st.markdown(
-                "In the **center-of-mass frame**, both balls approach each other and their "
-                "speeds stay unchanged in an elastic collision. The **scattering angle χ** "
-                "determines how they deflect: χ=0° means no deflection, χ=180° is a head-on collision. "
-                "The result is then transformed back to the lab frame."
-            )
 
     elif mode == "Types of Collisions":
         st.markdown("### Types of Collisions")
