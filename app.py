@@ -31,7 +31,7 @@ category = st.sidebar.selectbox("Category", [
 topic_map = {
     "🎯 Mechanics": ["Projectile Motion", "Kinematics", "Momentum & Collisions"],
     "💡 Optics": ["Snell's Law (Refraction)"],
-    "⚡ Electricity": ["Ohm's Law"],
+    "⚡ Electricity": ["Ohm's Law", "Potential Divider", "I-V Characteristics"],
     "🔄 Oscillations": ["Simple Pendulum"],
 }
 
@@ -543,6 +543,211 @@ elif topic == "Simple Pendulum":
     fig.update_layout(height=450, xaxis_range=[-L-0.3, L+0.3], yaxis_range=[-L-0.3, 0.3],
                       xaxis=dict(scaleanchor="y"), margin=dict(l=20, r=20, t=20, b=20))
     st.plotly_chart(fig, use_container_width=True)
+
+# ================================================================
+#                 ⚡ POTENTIAL DIVIDER
+# ================================================================
+elif topic == "Potential Divider":
+    st.markdown("## ⚡ Potential Divider")
+    st.latex(r"V_{\text{out}} = V_{\text{in}} \times \frac{R_2}{R_1 + R_2}")
+
+    solve = st.radio("Solve for:", ["Vout", "R₁", "R₂", "Vin"], horizontal=True, key="pd_solve")
+
+    col_a, col_b, col_c = st.columns(3)
+    with col_a:
+        vin = st.number_input("Vin (V)", 0.0, 100.0, 12.0, 0.5, key="pd_vin")
+    with col_b:
+        r1 = st.number_input("R₁ (Ω)", 0.0, 1e6, 1000.0, 100.0, key="pd_r1")
+    with col_c:
+        r2 = st.number_input("R₂ (Ω)", 0.0, 1e6, 2000.0, 100.0, key="pd_r2")
+
+    if solve == "Vout":
+        vout = vin * r2 / (r1 + r2) if (r1 + r2) > 0 else 0
+        st.success(f"**Vout = {vout:.4f} V**")
+    elif solve == "R₁":
+        vout = st.number_input("Vout (V)", 0.0, vin, vin * r2 / (r1 + r2), 0.1, key="pd_vout_r1")
+        r1_calc = r2 * (vin / vout - 1) if vout > 0 else 0
+        st.success(f"**R₁ = {r1_calc:.2f} Ω**")
+    elif solve == "R₂":
+        vout = st.number_input("Vout (V)", 0.0, vin, vin * r2 / (r1 + r2), 0.1, key="pd_vout_r2")
+        r2_calc = r1 / (vin / vout - 1) if vout < vin else 0
+        st.success(f"**R₂ = {r2_calc:.2f} Ω**")
+    else:
+        vout = st.number_input("Vout (V)", 0.0, 100.0, vin * r2 / (r1 + r2), 0.1, key="pd_vout_vin")
+        r_total = r1 + r2
+        vin_calc = vout * r_total / r2 if r2 > 0 else 0
+        st.success(f"**Vin = {vin_calc:.4f} V**")
+
+    # Potentiometer mode
+    st.subheader("🔧 Potentiometer Mode")
+    pot_pct = st.slider("Wiper position (%)", 0, 100, 67, 1, help="0% = Vout = 0, 100% = Vout = Vin")
+    r2_pot = (pot_pct / 100) * (r1 + r2)
+    vout_pot = vin * r2_pot / (r1 + r2)
+    st.metric("Vout at wiper", f"{vout_pot:.3f} V")
+
+    # Loading effect
+    with st.expander("🔍 Loading Effect", expanded=False):
+        rl = st.number_input("Load resistor R_L (Ω)", 0.0, 1e6, 10000.0, 100.0, key="pd_rl",
+                             help="Placed across R₂. Lower R_L = more loading = lower Vout")
+        if rl > 0:
+            r2_eff = 1 / (1 / r2 + 1 / rl) if r2 > 0 else 0
+            vout_loaded = vin * r2_eff / (r1 + r2_eff) if (r1 + r2_eff) > 0 else 0
+            st.metric("Vout with load", f"{vout_loaded:.3f} V")
+            st.metric("Effective R₂", f"{r2_eff:.2f} Ω")
+            diff_pct = (1 - vout_loaded / vout_pot) * 100 if vout_pot > 0 else 0
+            st.info(f"📉 Vout dropped by {diff_pct:.1f}% due to loading")
+
+    # Visual: voltage bar
+    vout_disp = vout_pot if solve == "Vout" else (
+        vout if solve == "R₁" else (
+            vout if solve == "R₂" else vout
+        )
+    )
+    # Just use pot value for the visual
+    fig = go.Figure()
+    fig.add_trace(go.Bar(
+        x=["R₁"], y=[r1], marker_color="#f59e0b",
+        text=f"R₁ = {r1:.0f} Ω<br>V drop = {vin - vout_pot:.2f} V",
+        textposition="inside", textfont=dict(size=11, color="#fff"),
+        hovertemplate="R₁: %{y:.0f} Ω<br>%{text}<extra></extra>",
+    ))
+    fig.add_trace(go.Bar(
+        x=["R₂"], y=[r2], marker_color="#10b981",
+        text=f"R₂ = {r2:.0f} Ω<br><b>Vout = {vout_pot:.2f} V</b>",
+        textposition="inside", textfont=dict(size=11, color="#fff"),
+        hovertemplate="R₂: %{y:.0f} Ω<br>%{text}<extra></extra>",
+    ))
+    fig.update_layout(
+        height=250,
+        title=f"Vin = {vin:.1f} V | Vout = {vout_pot:.2f} V",
+        plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
+        font_color="#ccc", margin=dict(l=10, r=10, t=40, b=10),
+        yaxis=dict(title="Resistance (Ω)"),
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+# ================================================================
+#                📈 I-V CHARACTERISTICS
+# ================================================================
+elif topic == "I-V Characteristics":
+    st.markdown("## 📈 I-V Characteristics")
+    st.markdown("Compare how different components behave under varying voltage.")
+
+    component = st.selectbox("Component", ["Ohmic Resistor", "Filament Lamp", "Diode"], key="iv_comp")
+
+    voltage = np.linspace(0, 12, 400)
+
+    if component == "Ohmic Resistor":
+        r_iv = st.slider("Resistance (Ω)", 1.0, 100.0, 10.0, 1.0, key="iv_r_ohmic")
+        current = voltage / r_iv
+        st.markdown(f"""<div class="result-box">
+            <b>Ohmic conductor</b> — obeys Ohm's law: I = V/R<br>
+            Gradient = 1/R = {1/r_iv:.4f} S (Siemens)<br>
+            At V = 12 V: I = {12/r_iv:.4f} A
+        </div>""", unsafe_allow_html=True)
+        desc = f"Linear: I = V / {r_iv:.0f}"
+        color = "#6366f1"
+
+    elif component == "Filament Lamp":
+        temp_factor = st.slider("Temperature coefficient", 0.5, 5.0, 2.0, 0.1, key="iv_temp",
+                                help="Higher = resistance increases more with current (heating effect)")
+        # Non-ohmic: resistance increases with current due to heating
+        current = voltage / (10 + temp_factor * voltage)
+        color = "#f59e0b"
+        st.markdown(f"""<div class="result-box">
+            <b>Non-ohmic (filament lamp)</b> — resistance <b>increases</b> with temperature<br>
+            As current flows, filament heats up → lattice vibrations increase → more collisions → higher R<br>
+            The graph <b>curves</b> away from the straight line
+        </div>""", unsafe_allow_html=True)
+        desc = "Non-linear: R increases with I"
+
+    else:  # Diode
+        fwd_bias = np.linspace(0, 12, 400)
+        # Diode equation approximation: I = Is * (exp(V/(n*Vt)) - 1)
+        vt = 0.025  # Thermal voltage at room temp
+        n_val = st.slider("Ideality factor (n)", 1.0, 2.0, 1.5, 0.1, key="iv_n",
+                          help="1 = ideal, ~2 = real diode")
+        is_sat = st.number_input("Reverse saturation current Iₛ (μA)", 0.001, 100.0, 10.0, 1.0,
+                                 key="iv_is", format="%.3f") * 1e-6
+        current_fwd = is_sat * (np.exp(fwd_bias / (n_val * vt)) - 1)
+
+        # Reverse bias
+        rev_voltage = np.linspace(-12, 0, 200)
+        current_rev = -is_sat * (np.exp(rev_voltage / (n_val * vt)) - 1)
+
+        fig = go.Figure()
+        # Forward bias
+        fig.add_trace(go.Scatter(
+            x=fwd_bias, y=current_fwd * 1000, mode="lines",
+            line=dict(color="#10b981", width=2.5),
+            name="Forward bias",
+            hovertemplate="V = %{x:.2f} V<br>I = %{y:.4f} mA<extra></extra>",
+        ))
+        # Reverse bias
+        fig.add_trace(go.Scatter(
+            x=rev_voltage, y=current_rev * 1000, mode="lines",
+            line=dict(color="#ef4444", width=2.5),
+            name="Reverse bias",
+            hovertemplate="V = %{x:.2f} V<br>I = %{y:.6f} mA<extra></extra>",
+        ))
+        # Knee voltage annotation
+        knee_v = n_val * vt * math.log(2)  # Approximate knee
+        fig.add_vline(x=knee_v, line=dict(color="#888", width=1, dash="dot"),
+                       annotation_text=f"Knee ≈ {knee_v:.2f} V")
+
+        fig.update_layout(
+            height=400,
+            xaxis=dict(title="Voltage (V)", range=[-13, 13]),
+            yaxis=dict(title="Current (mA)", type="log",
+                       tickvals=[0.001, 0.01, 0.1, 1, 10, 100]),
+            plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
+            font_color="#ccc", margin=dict(l=10, r=10, t=10, b=30),
+            hovermode="x unified",
+        )
+        st.plotly_chart(fig, use_container_width=True)
+
+        st.info(f"""
+        💡 **Diode characteristics:**
+        - **Forward bias** (V > 0): Current grows exponentially past ~{knee_v:.2f} V (knee voltage)
+        - **Reverse bias** (V < 0): Negligible current ≈ {is_sat*1e6:.3f} μA (saturation current)
+        - The ideality factor n = {n_val:.1f} indicates {'ideal' if n_val < 1.3 else 'realistic'} diode behavior
+        """)
+        st.markdown("""
+        ---
+        <div style="background:#1a1d2a;padding:12px;border-radius:8px;">
+        <b>Key Formula:</b> I = Iₛ(e<sup>V/(nV<sub>T</sub>)</sup> − 1)  where V<sub>T</sub> ≈ 25 mV at room temperature
+        </div>
+        """, unsafe_allow_html=True)
+        st.stop()  # Don't show the generic graph below
+
+    # Generic I-V graph for ohmic and filament lamp
+    if component != "Diode":
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=voltage, y=current, mode="lines",
+                                  line=dict(color=color, width=2.5),
+                                  name=component,
+                                  hovertemplate="V = %{x:.2f} V<br>I = %{y:.4f} A<extra></extra>"))
+        # Ohmic reference line for filament lamp
+        if component == "Filament Lamp":
+            ohmic_i = voltage / 10
+            fig.add_trace(go.Scatter(x=voltage, y=ohmic_i, mode="lines",
+                                      line=dict(color="#555", width=1, dash="dot"),
+                                      name="Ohmic reference (R=10Ω)"))
+        fig.update_layout(
+            height=400,
+            xaxis=dict(title="Voltage (V)", range=[0, 13]),
+            yaxis=dict(title="Current (A)"),
+            plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
+            font_color="#ccc", margin=dict(l=10, r=10, t=10, b=30),
+            hovermode="x unified",
+        )
+        st.plotly_chart(fig, use_container_width=True)
+
+        if component == "Filament Lamp":
+            st.info("""
+            💡 **Filament lamp:** The curve shows current increasing less at higher voltages because
+            the filament gets hotter → resistance increases. This is non-ohmic behavior.
+            """)
 
 # ── FOOTER ────────────────────────────────────────────────
 st.markdown("---")
