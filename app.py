@@ -549,130 +549,182 @@ elif topic == "Simple Pendulum":
 #                 ⚡ POTENTIAL DIVIDER
 # ================================================================
 elif topic == "Potential Divider":
-    st.markdown("## ⚡ Potential Divider — Potentiometer")
-    st.latex(r"V_{\text{out}} = V_{\text{in}} \times \frac{R_{\text{below}}}{R_{\text{total}}}")
+    st.markdown("## ⚡ Potential Divider")
 
-    col_a, col_b = st.columns(2)
-    with col_a:
-        vin = st.number_input("Vin (V)", 0.0, 100.0, 12.0, 0.5, key="pd_vin")
-    with col_b:
-        r_total = st.number_input("Rₜₒₜₐₗ (Ω)", 0.0, 1e6, 3000.0, 100.0, key="pd_rt",
-                                   help="Total resistance of the potentiometer")
+    pd_type = st.radio("Type", ["Potentiometer", "Variable Resistor"], horizontal=True, key="pd_type")
 
-    pot_pct = st.slider("Wiper position (%)", 0, 100, 67, 1, key="pd_pct",
-                         help="0% = wiper at bottom (Vout = 0), 100% = wiper at top (Vout = Vin)")
+    if pd_type == "Potentiometer":
+        st.latex(r"V_{\text{out}} = V_{\text{in}} \times \frac{R_{\text{below}}}{R_{\text{total}}}")
 
-    # Calculate R₁ (above wiper), R₂ (below wiper), and Vout
-    r2_val = (pot_pct / 100) * r_total
-    r1_val = r_total - r2_val
-    vout_pot = vin * r2_val / r_total if r_total > 0 else 0
+        col_a, col_b = st.columns(2)
+        with col_a:
+            vin = st.number_input("Vin (V)", 0.0, 100.0, 12.0, 0.5, key="pd_vin_pot")
+        with col_b:
+            r_total = st.number_input("Rₜₒₜₐₗ (Ω)", 0.0, 1e6, 3000.0, 100.0, key="pd_rt",
+                                       help="Total resistance of the potentiometer")
 
-    col_m1, col_m2, col_m3 = st.columns(3)
-    with col_m1:
-        st.metric("Vin", f"{vin:.2f} V")
-    with col_m2:
-        st.metric("Vout", f"{vout_pot:.3f} V")
-        ratio = (vout_pot / vin * 100) if vin > 0 else 0
-    with col_m3:
-        st.metric("Ratio", f"{ratio:.1f}%")
+        pot_pct = st.slider("Wiper position (%)", 0, 100, 67, 1, key="pd_pct",
+                             help="0% = bottom (Vout=0), 100% = top (Vout=Vin)")
 
-    col_r1, col_r2 = st.columns(2)
-    with col_r1:
-        st.metric("R₁ (above wiper)", f"{r1_val:.0f} Ω")
-    with col_r2:
-        st.metric("R₂ (below wiper)", f"{r2_val:.0f} Ω")
+        r2_val = (pot_pct / 100) * r_total
+        r1_val = r_total - r2_val
+        vout_pot = vin * r2_val / r_total if r_total > 0 else 0
 
-    # Loading effect
-    with st.expander("🔍 Loading Effect", expanded=False):
-        rl = st.number_input("Load resistor R_L (Ω)", 0.0, 1e6, 10000.0, 100.0, key="pd_rl",
-                             help="Connected across R₂ (below wiper). Lower R_L = more loading")
-        if rl > 0:
-            r2_eff = 1 / (1 / r2_val + 1 / rl) if r2_val > 0 else 0
-            vout_loaded = vin * r2_eff / (r1_val + r2_eff) if (r1_val + r2_eff) > 0 else 0
-            st.metric("Vout with load", f"{vout_loaded:.3f} V")
-            st.metric("Effective R₂", f"{r2_eff:.2f} Ω")
-            diff_pct = (1 - vout_loaded / vout_pot) * 100 if vout_pot > 0 else 0
-            if diff_pct > 0.5:
-                st.info(f"📉 Vout dropped by {diff_pct:.1f}% due to loading")
-            else:
-                st.success(f"✅ Minimal loading effect ({diff_pct:.1f}% drop)")
+        col_m1, col_m2, col_m3 = st.columns(3)
+        with col_m1:
+            st.metric("Vin", f"{vin:.2f} V")
+        with col_m2:
+            st.metric("Vout", f"{vout_pot:.3f} V")
+        with col_m3:
+            st.metric("Ratio", f"{(vout_pot/vin*100) if vin > 0 else 0:.1f}%")
 
-    # Circuit diagram SVG
-    # Wiper y-position: 0% = bottom (280), 100% = top (40)
-    wiper_y = 280 - (pot_pct / 100) * 240
+        col_r1, col_r2 = st.columns(2)
+        with col_r1:
+            st.metric("R₁ (above)", f"{r1_val:.0f} Ω")
+        with col_r2:
+            st.metric("R₂ (below)", f"{r2_val:.0f} Ω")
 
-    svg_circuit = f'''<svg viewBox="0 0 460 340" style="width:100%;max-width:460px;display:block;margin:0 auto;">
-        <style>
-            .wire {{ stroke: #7c8cf0; stroke-width: 2; fill: none; }}
-            .label {{ fill: #aaa; font-size: 12px; font-family: sans-serif; }}
-            .val {{ fill: #fff; font-size: 13px; font-weight: bold; font-family: sans-serif; }}
-            .title {{ fill: #7c8cf0; font-size: 11px; font-family: sans-serif; }}
-        </style>
+        # Loading effect
+        with st.expander("🔍 Loading Effect", expanded=False):
+            rl = st.number_input("Load R_L (Ω)", 0.0, 1e6, 10000.0, 100.0, key="pd_rl_pot",
+                                 help="Across R₂. Lower R_L = more loading")
+            if rl > 0:
+                r2_eff = 1 / (1 / r2_val + 1 / rl) if r2_val > 0 else 0
+                vout_loaded = vin * r2_eff / (r1_val + r2_eff) if (r1_val + r2_eff) > 0 else 0
+                diff_pct = (1 - vout_loaded / vout_pot) * 100 if vout_pot > 0 else 0
+                st.metric("Vout with load", f"{vout_loaded:.3f} V")
+                st.info(f"{'📉' if diff_pct > 0.5 else '✅'} {'Drop' if diff_pct > 0.5 else 'Minimal'}: {diff_pct:.1f}%")
 
-        <!-- Left vertical wire -->
-        <line x1="70" y1="40" x2="70" y2="280" class="wire"/>
+        # Potentiometer SVG
+        wiper_y = 280 - (pot_pct / 100) * 240
+        svg_circuit = f'''<svg viewBox="0 0 460 340" style="width:100%;max-width:460px;display:block;margin:0 auto;">
+            <style>
+                .wire {{ stroke: #7c8cf0; stroke-width: 2; fill: none; }}
+                .label {{ fill: #aaa; font-size: 12px; font-family: sans-serif; }}
+                .val {{ fill: #fff; font-size: 13px; font-weight: bold; font-family: sans-serif; }}
+                .title {{ fill: #7c8cf0; font-size: 11px; font-family: sans-serif; }}
+            </style>
+            <line x1="70" y1="40" x2="70" y2="280" class="wire"/>
+            <line x1="70" y1="40" x2="200" y2="40" class="wire"/>
+            <polyline points="200,40 190,55 210,70 190,85 210,100 190,115 210,130 190,145 210,160 190,175 210,190 190,205 210,220 190,235 210,250 190,265 200,280" class="wire" stroke-width="2.5"/>
+            <line x1="200" y1="280" x2="70" y2="280" class="wire"/>
+            <line x1="60" y1="55" x2="60" y2="100" stroke="#f0ad4e" stroke-width="3"/>
+            <line x1="55" y1="70" x2="65" y2="70" stroke="#f0ad4e" stroke-width="3"/>
+            <line x1="52" y1="85" x2="68" y2="85" stroke="#f0ad4e" stroke-width="3"/>
+            <line x1="280" y1="{wiper_y}" x2="215" y2="{wiper_y}" stroke="#10b981" stroke-width="2"/>
+            <polygon points="215,{wiper_y - 5} 205,{wiper_y} 215,{wiper_y + 5}" fill="#10b981"/>
+            <circle cx="200" cy="{wiper_y}" r="5" fill="#10b981"/>
+            <line x1="280" y1="{wiper_y}" x2="410" y2="{wiper_y}" class="wire"/>
+            <polygon points="410,{wiper_y - 5} 425,{wiper_y} 410,{wiper_y + 5}" fill="#10b981"/>
+            <text x="33" y="32" class="label" text-anchor="end">Vin</text>
+            <text x="33" y="48" class="val" text-anchor="end" fill="#f0ad4e">{vin:.1f} V</text>
+            <text x="430" y="{wiper_y - 8}" class="label" text-anchor="start">Vout</text>
+            <text x="430" y="{wiper_y + 8}" class="val" text-anchor="start" fill="#10b981">{vout_pot:.2f} V</text>
+            <text x="200" y="25" class="title" text-anchor="middle" font-size="13">Potentiometer</text>
+            <text x="150" y="{40 + (wiper_y - 40) * 0.5 - 5}" class="title" text-anchor="end">R₁ = {r1_val:.0f} Ω</text>
+            <text x="150" y="{40 + (wiper_y - 40) * 0.5 + 8}" class="title" text-anchor="end">({100 - pot_pct:.0f}%)</text>
+            <text x="150" y="{wiper_y + (280 - wiper_y) * 0.5 - 5}" class="title" text-anchor="end">R₂ = {r2_val:.0f} Ω</text>
+            <text x="150" y="{wiper_y + (280 - wiper_y) * 0.5 + 8}" class="title" text-anchor="end">({pot_pct:.0f}%)</text>
+            <text x="285" y="{wiper_y + 15}" class="label" fill="#10b981" font-size="10">Wiper</text>
+        </svg>'''
 
-        <!-- Top wire: left to potentiometer -->
-        <line x1="70" y1="40" x2="200" y2="40" class="wire"/>
+        components.html(
+            f'<div style="text-align:center;background:#0f0f1a;border:1px solid #2a2a3a;border-radius:12px;padding:10px;margin:12px 0;">{svg_circuit}</div>',
+            height=370, scrolling=False,
+        )
 
-        <!-- Potentiometer zigzag (single vertical component) -->
-        <polyline points="200,40 190,55 210,70 190,85 210,100 190,115 210,130 190,145 210,160 190,175 210,190 190,205 210,220 190,235 210,250 190,265 200,280" class="wire" stroke-width="2.5"/>
+    else:  # Variable Resistor
+        st.latex(r"V_{\text{out}} = V_{\text{in}} \times \frac{R_{\text{fixed}}}{R_{\text{var}} + R_{\text{fixed}}}")
 
-        <!-- Bottom wire -->
-        <line x1="200" y1="280" x2="70" y2="280" class="wire"/>
+        col_a, col_b = st.columns(2)
+        with col_a:
+            vin = st.number_input("Vin (V)", 0.0, 100.0, 12.0, 0.5, key="pd_vin_vr")
+        with col_b:
+            r_fixed = st.number_input("R_fixed (Ω)", 0.0, 1e6, 1000.0, 100.0, key="pd_rf",
+                                       help="Fixed resistor (e.g. 1 kΩ)")
 
-        <!-- Battery symbol (left) -->
-        <line x1="60" y1="55" x2="60" y2="100" stroke="#f0ad4e" stroke-width="3"/>
-        <line x1="55" y1="70" x2="65" y2="70" stroke="#f0ad4e" stroke-width="3"/>
-        <line x1="52" y1="85" x2="68" y2="85" stroke="#f0ad4e" stroke-width="3"/>
+        r_var = st.slider("R_var (Ω)", 0, 10000, 2000, 100, key="pd_rvar",
+                           help="Variable resistor value")
 
-        <!-- Potentiometer wiper: arrow from right pointing to tap -->
-        <!-- Arrow head at the tap point on the zigzag -->
-        <line x1="280" y1="{wiper_y}" x2="215" y2="{wiper_y}" stroke="#10b981" stroke-width="2"/>
-        <polygon points="215,{wiper_y - 5} 205,{wiper_y} 215,{wiper_y + 5}" fill="#10b981"/>
-        <circle cx="200" cy="{wiper_y}" r="5" fill="#10b981"/>
+        vout_vr = vin * r_fixed / (r_var + r_fixed) if (r_var + r_fixed) > 0 else 0
 
-        <!-- Vout wire from wiper to right -->
-        <line x1="280" y1="{wiper_y}" x2="410" y2="{wiper_y}" class="wire"/>
-        <polygon points="410,{wiper_y - 5} 425,{wiper_y} 410,{wiper_y + 5}" fill="#10b981"/>
+        col_m1, col_m2, col_m3 = st.columns(3)
+        with col_m1:
+            st.metric("Vin", f"{vin:.2f} V")
+        with col_m2:
+            st.metric("Vout", f"{vout_vr:.3f} V")
+        with col_m3:
+            st.metric("Ratio", f"{(vout_vr/vin*100) if vin > 0 else 0:.1f}%")
 
-        <!-- Labels -->
-        <text x="33" y="32" class="label" text-anchor="end">Vin</text>
-        <text x="33" y="48" class="val" text-anchor="end" fill="#f0ad4e">{vin:.1f} V</text>
+        col_r1, col_r2 = st.columns(2)
+        with col_r1:
+            st.metric("R_var", f"{r_var:.0f} Ω")
+        with col_r2:
+            st.metric("R_fixed", f"{r_fixed:.0f} Ω")
 
-        <text x="430" y="{wiper_y - 8}" class="label" text-anchor="start">Vout</text>
-        <text x="430" y="{wiper_y + 8}" class="val" text-anchor="start" fill="#10b981">{vout_pot:.2f} V</text>
+        # Variable resistor SVG: R_var (with arrow through zigzag) on top, R_fixed on bottom
+        # Total zigzag height: 240px. R_var portion = r_var/(r_var+r_fixed) * 240
+        vr_ratio = r_var / (r_var + r_fixed) if (r_var + r_fixed) > 0 else 0.5
+        split_y = int(280 - (1 - vr_ratio) * 240)  # Top of var resistor region
+        # Clamp to valid range
+        split_y = max(70, min(250, split_y))
 
-        <!-- Potentiometer label above zigzag -->
-        <text x="200" y="25" class="title" text-anchor="middle" font-size="13">Potentiometer</text>
+        svg_circuit = f'''<svg viewBox="0 0 460 340" style="width:100%;max-width:460px;display:block;margin:0 auto;">
+            <style>
+                .wire {{ stroke: #7c8cf0; stroke-width: 2; fill: none; }}
+                .label {{ fill: #aaa; font-size: 12px; font-family: sans-serif; }}
+                .val {{ fill: #fff; font-size: 13px; font-weight: bold; font-family: sans-serif; }}
+                .title {{ fill: #7c8cf0; font-size: 11px; font-family: sans-serif; }}
+            </style>
+            <line x1="70" y1="40" x2="70" y2="280" class="wire"/>
+            <line x1="70" y1="40" x2="190" y2="40" class="wire"/>
 
-        <!-- R₁ label (above wiper) -->
-        <text x="150" y="{40 + (wiper_y - 40) * 0.5 - 5}" class="title" text-anchor="end">R₁ = {r1_val:.0f} Ω</text>
-        <text x="150" y="{40 + (wiper_y - 40) * 0.5 + 8}" class="title" text-anchor="end">({100 - pot_pct:.0f}%)</text>
+            <!-- Variable resistor zigzag (top portion) with arrow through it -->
+            <polyline points="190,40 180,55 200,70 180,85 200,100 180,115 200,130 180,145 200,160 180,175 200,190 180,205 200,220 180,235 200,250" class="wire" stroke-width="2.5"/>
+            <!-- Diagonal arrow through variable resistor -->
+            <line x1="175" y1="50" x2="215" y2="245" stroke="#f59e0b" stroke-width="2"/>
+            <polygon points="215,245 210,238 220,238" fill="#f59e0b"/>
 
-        <!-- R₂ label (below wiper) -->
-        <text x="150" y="{wiper_y + (280 - wiper_y) * 0.5 - 5}" class="title" text-anchor="end">R₂ = {r2_val:.0f} Ω</text>
-        <text x="150" y="{wiper_y + (280 - wiper_y) * 0.5 + 8}" class="title" text-anchor="end">({pot_pct:.0f}%)</text>
+            <!-- Junction dot -->
+            <circle cx="200" cy="250" r="4" fill="#7c8cf0"/>
 
-        <!-- Wiper label -->
-        <text x="285" y="{wiper_y + 15}" class="label" fill="#10b981" font-size="10">Wiper</text>
-    </svg>'''
+            <!-- Vout wire from junction to right -->
+            <line x1="200" y1="250" x2="410" y2="250" class="wire"/>
+            <polygon points="410,245 425,250 410,255" fill="#10b981"/>
 
-    components.html(
-        f'<div style="text-align:center;background:#0f0f1a;border:1px solid #2a2a3a;border-radius:12px;padding:10px;margin:12px 0;">{svg_circuit}</div>',
-        height=370,
-        scrolling=False,
-    )
+            <!-- Fixed resistor zigzag (from junction down to bottom wire) -->
+            <line x1="200" y1="250" x2="200" y2="265" class="wire"/>
+            <polyline points="200,265 190,272 210,282 190,292 200,300" class="wire" stroke-width="2.5"/>
+            <line x1="200" y1="300" x2="200" y2="280" class="wire"/>
+            <line x1="200" y1="280" x2="70" y2="280" class="wire"/>
 
-    # Summary card
-    v1 = vin - vout_pot
-    col_s1, col_s2, col_s3 = st.columns(3)
-    with col_s1:
-        st.metric("Vin", f"{vin:.2f} V")
-    with col_s2:
-        st.metric("V across R₁", f"{v1:.2f} V")
-    with col_s3:
-        st.metric("Vout (across R₂)", f"{vout_pot:.2f} V")
+            <!-- Battery -->
+            <line x1="60" y1="55" x2="60" y2="100" stroke="#f0ad4e" stroke-width="3"/>
+            <line x1="55" y1="70" x2="65" y2="70" stroke="#f0ad4e" stroke-width="3"/>
+            <line x1="52" y1="85" x2="68" y2="85" stroke="#f0ad4e" stroke-width="3"/>
+
+            <!-- Labels -->
+            <text x="33" y="32" class="label" text-anchor="end">Vin</text>
+            <text x="33" y="48" class="val" text-anchor="end" fill="#f0ad4e">{vin:.1f} V</text>
+            <text x="430" y="242" class="label" text-anchor="start">Vout</text>
+            <text x="430" y="258" class="val" text-anchor="start" fill="#10b981">{vout_vr:.2f} V</text>
+
+            <text x="190" y="25" class="title" text-anchor="middle" font-size="13">Variable<br/>Resistor</text>
+            <text x="150" y="145" class="val" text-anchor="end" fill="#f59e0b">{r_var:.0f} Ω</text>
+
+            <text x="215" y="275" class="title" text-anchor="start">Fixed<br/>Resistor</text>
+            <text x="215" y="292" class="val" text-anchor="start" fill="#10b981">{r_fixed:.0f} Ω</text>
+        </svg>'''
+
+        components.html(
+            f'<div style="text-align:center;background:#0f0f1a;border:1px solid #2a2a3a;border-radius:12px;padding:10px;margin:12px 0;">{svg_circuit}</div>',
+            height=370, scrolling=False,
+        )
+
+        # Voltage range info
+        st.info(f"""
+        💡 **Range:** R_var = 0 to 10 kΩ → Vout ranges from **{vin * r_fixed / (0 + r_fixed):.2f} V** to **{vin * r_fixed / (10000 + r_fixed):.2f} V**
+        """)
 
 # ================================================================
 #                📈 I-V CHARACTERISTICS
