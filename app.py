@@ -597,34 +597,95 @@ elif topic == "Potential Divider":
             diff_pct = (1 - vout_loaded / vout_pot) * 100 if vout_pot > 0 else 0
             st.info(f"📉 Vout dropped by {diff_pct:.1f}% due to loading")
 
-    # Visual: voltage bar
-    vout_disp = vout_pot if solve == "Vout" else (
-        vout if solve == "R₁" else (
-            vout if solve == "R₂" else vout
-        )
-    )
-    # Just use pot value for the visual
-    fig = go.Figure()
-    fig.add_trace(go.Bar(
-        x=["R₁"], y=[r1], marker_color="#f59e0b",
-        text=f"R₁ = {r1:.0f} Ω<br>V drop = {vin - vout_pot:.2f} V",
-        textposition="inside", textfont=dict(size=11, color="#fff"),
-        hovertemplate="R₁: %{y:.0f} Ω<br>%{text}<extra></extra>",
-    ))
-    fig.add_trace(go.Bar(
-        x=["R₂"], y=[r2], marker_color="#10b981",
-        text=f"R₂ = {r2:.0f} Ω<br><b>Vout = {vout_pot:.2f} V</b>",
-        textposition="inside", textfont=dict(size=11, color="#fff"),
-        hovertemplate="R₂: %{y:.0f} Ω<br>%{text}<extra></extra>",
-    ))
-    fig.update_layout(
-        height=250,
-        title=f"Vin = {vin:.1f} V | Vout = {vout_pot:.2f} V",
-        plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
-        font_color="#ccc", margin=dict(l=10, r=10, t=40, b=10),
-        yaxis=dict(title="Resistance (Ω)"),
-    )
-    st.plotly_chart(fig, use_container_width=True)
+    # Circuit diagram SVG
+    pct = (vout_pot / vin * 100) if vin > 0 else 0
+    svg_circuit = f'''<svg viewBox="0 0 420 340" style="width:100%;max-width:420px;display:block;margin:0 auto;">
+        <defs>
+            <marker id="dot" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6">
+                <circle cx="5" cy="5" r="3" fill="#7c8cf0"/>
+            </marker>
+        </defs>
+        <style>
+            .wire {{ stroke: #7c8cf0; stroke-width: 2; fill: none; }}
+            .label {{ fill: #aaa; font-size: 12px; font-family: sans-serif; }}
+            .val {{ fill: #fff; font-size: 13px; font-weight: bold; font-family: sans-serif; }}
+            .title {{ fill: #7c8cf0; font-size: 11px; font-family: sans-serif; }}
+        </style>
+
+        <!-- Left vertical wire: top to bottom -->
+        <line x1="80" y1="40" x2="80" y2="280" class="wire"/>
+
+        <!-- Top wire: left to R1 -->
+        <line x1="80" y1="40" x2="140" y2="40" class="wire"/>
+
+        <!-- R1 zigzag (between 140,40 and 260,40) -->
+        <polyline points="140,40 150,20 170,60 190,20 210,60 230,20 250,40 260,40" class="wire" stroke-width="2.5"/>
+
+        <!-- Wire from R1 to junction -->
+        <line x1="260" y1="40" x2="320" y2="40" class="wire"/>
+        <line x1="320" y1="40" x2="320" y2="130" class="wire"/>
+
+        <!-- Junction dot -->
+        <circle cx="320" cy="40" r="4" fill="#7c8cf0"/>
+
+        <!-- Top-right wire to Vout arrow -->
+        <line x1="320" y1="40" x2="380" y2="40" class="wire"/>
+        <polygon points="380,35 395,40 380,45" fill="#10b981"/>
+
+        <!-- R2 zigzag (vertical, between 320,130 and 320,210) -->
+        <polyline points="320,130 310,140 330,160 310,180 330,200 310,210 320,220" class="wire" stroke-width="2.5"/>
+
+        <!-- Wire from R2 to bottom -->
+        <line x1="320" y1="220" x2="320" y2="280" class="wire"/>
+        <!-- Bottom wire back to left -->
+        <line x1="80" y1="280" x2="320" y2="280" class="wire"/>
+
+        <!-- Battery symbol (left side) -->
+        <line x1="70" y1="55" x2="70" y2="100" stroke="#f0ad4e" stroke-width="3"/>
+        <line x1="65" y1="70" x2="75" y2="70" stroke="#f0ad4e" stroke-width="3"/>
+        <line x1="62" y1="85" x2="78" y2="85" stroke="#f0ad4e" stroke-width="3"/>
+
+        <!-- Ground symbol (bottom left) -->
+        <line x1="80" y1="280" x2="80" y2="300" class="wire"/>
+        <line x1="65" y1="300" x2="95" y2="300" stroke="#ef4444" stroke-width="2.5"/>
+        <line x1="71" y1="306" x2="89" y2="306" stroke="#ef4444" stroke-width="2"/>
+        <line x1="77" y1="312" x2="83" y2="312" stroke="#ef4444" stroke-width="1.5"/>
+
+        <!-- Labels -->
+        <text x="40" y="32" class="label" text-anchor="end">Vin</text>
+        <text x="40" y="48" class="val" text-anchor="end" fill="#f0ad4e">{vin:.1f} V</text>
+        <text x="398" y="36" class="label">Vout</text>
+        <text x="398" y="52" class="val" fill="#10b981">{vout_pot:.2f} V</text>
+
+        <!-- R1 label above zigzag -->
+        <text x="200" y="18" class="title" text-anchor="middle">R₁</text>
+        <text x="200" y="72" class="val" text-anchor="middle" fill="#f59e0b">{r1:.0f} Ω</text>
+        <text x="200" y="86" class="title" text-anchor="middle">V = {vin - vout_pot:.2f} V</text>
+
+        <!-- R2 label beside zigzag -->
+        <text x="338" y="180" class="title" text-anchor="start">R₂</text>
+        <text x="338" y="194" class="val" text-anchor="start" fill="#10b981">{r2:.0f} Ω</text>
+        <text x="338" y="208" class="title" text-anchor="start">V = {vout_pot:.2f} V</text>
+
+        <!-- Ground label -->
+        <text x="105" y="306" class="label" fill="#ef4444">GND (0 V)</text>
+
+        <!-- Current flow arrows (small) -->
+        <polygon points="95,36 105,40 95,44" fill="#f0ad4e" opacity="0.7"/>
+        <polygon points="340,225 340,215 344,220" fill="#10b981" opacity="0.7"/>
+    </svg>'''
+
+    st.markdown(f'<div style="text-align:center;background:#0f0f1a;border:1px solid #2a2a3a;border-radius:12px;padding:10px;margin:12px 0;">{svg_circuit}</div>', unsafe_allow_html=True)
+
+    # Summary card
+    v1 = vin - vout_pot
+    col_s1, col_s2, col_s3 = st.columns(3)
+    with col_s1:
+        st.metric("Vin", f"{vin:.2f} V")
+    with col_s2:
+        st.metric("V across R₁", f"{v1:.2f} V")
+    with col_s3:
+        st.metric("Vout (across R₂)", f"{vout_pot:.2f} V")
 
 # ================================================================
 #                📈 I-V CHARACTERISTICS
