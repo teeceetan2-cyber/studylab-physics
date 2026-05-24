@@ -646,12 +646,6 @@ elif topic == "Potential Divider":
         <line x1="65" y1="70" x2="75" y2="70" stroke="#f0ad4e" stroke-width="3"/>
         <line x1="62" y1="85" x2="78" y2="85" stroke="#f0ad4e" stroke-width="3"/>
 
-        <!-- Ground symbol (bottom left) -->
-        <line x1="80" y1="280" x2="80" y2="300" class="wire"/>
-        <line x1="65" y1="300" x2="95" y2="300" stroke="#ef4444" stroke-width="2.5"/>
-        <line x1="71" y1="306" x2="89" y2="306" stroke="#ef4444" stroke-width="2"/>
-        <line x1="77" y1="312" x2="83" y2="312" stroke="#ef4444" stroke-width="1.5"/>
-
         <!-- Labels -->
         <text x="40" y="32" class="label" text-anchor="end">Vin</text>
         <text x="40" y="48" class="val" text-anchor="end" fill="#f0ad4e">{vin:.1f} V</text>
@@ -668,12 +662,18 @@ elif topic == "Potential Divider":
         <text x="338" y="194" class="val" text-anchor="start" fill="#10b981">{r2:.0f} Ω</text>
         <text x="338" y="208" class="title" text-anchor="start">V = {vout_pot:.2f} V</text>
 
-        <!-- Ground label -->
-        <text x="105" y="306" class="label" fill="#ef4444">GND (0 V)</text>
+        <!-- Wiper position labels on R₂ -->
+        <text x="330" y="118" class="label" fill="#f59e0b" font-size="11">100% (Vout = {vin:.1f} V)</text>
+        <line x1="320" y1="125" x2="330" y2="125" stroke="#555" stroke-width="1" stroke-dasharray="3,3"/>
+        <circle cx="320" cy="125" r="3" fill="#f59e0b" opacity="0.5"/>
 
-        <!-- Current flow arrows (small) -->
-        <polygon points="95,36 105,40 95,44" fill="#f0ad4e" opacity="0.7"/>
-        <polygon points="340,225 340,215 344,220" fill="#10b981" opacity="0.7"/>
+        <text x="330" y="305" class="label" fill="#ef4444" font-size="11">0% (Vout = 0 V)</text>
+        <line x1="320" y1="295" x2="330" y2="295" stroke="#555" stroke-width="1" stroke-dasharray="3,3"/>
+        <circle cx="320" cy="295" r="3" fill="#ef4444" opacity="0.5"/>
+
+        <!-- Wiper arrow (current position) -->
+        <line x1="338" y1="{220 - (pct/100)*90}" x2="350" y2="{220 - (pct/100)*90}" stroke="#10b981" stroke-width="2"/>
+        <polygon points="350,{220 - (pct/100)*90 - 4} 358,{220 - (pct/100)*90} 350,{220 - (pct/100)*90 + 4}" fill="#10b981"/>
     </svg>'''
 
     components.html(
