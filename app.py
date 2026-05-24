@@ -549,62 +549,57 @@ elif topic == "Simple Pendulum":
 #                 ⚡ POTENTIAL DIVIDER
 # ================================================================
 elif topic == "Potential Divider":
-    st.markdown("## ⚡ Potential Divider")
-    st.latex(r"V_{\text{out}} = V_{\text{in}} \times \frac{R_2}{R_1 + R_2}")
+    st.markdown("## ⚡ Potential Divider — Potentiometer")
+    st.latex(r"V_{\text{out}} = V_{\text{in}} \times \frac{R_{\text{below}}}{R_{\text{total}}}")
 
-    solve = st.radio("Solve for:", ["Vout", "R₁", "R₂", "Vin"], horizontal=True, key="pd_solve")
-
-    col_a, col_b, col_c = st.columns(3)
+    col_a, col_b = st.columns(2)
     with col_a:
         vin = st.number_input("Vin (V)", 0.0, 100.0, 12.0, 0.5, key="pd_vin")
     with col_b:
-        r1 = st.number_input("R₁ (Ω)", 0.0, 1e6, 1000.0, 100.0, key="pd_r1")
-    with col_c:
-        r2 = st.number_input("R₂ (Ω)", 0.0, 1e6, 2000.0, 100.0, key="pd_r2")
+        r_total = st.number_input("Rₜₒₜₐₗ (Ω)", 0.0, 1e6, 3000.0, 100.0, key="pd_rt",
+                                   help="Total resistance of the potentiometer")
 
-    if solve == "Vout":
-        vout = vin * r2 / (r1 + r2) if (r1 + r2) > 0 else 0
-        st.success(f"**Vout = {vout:.4f} V**")
-    elif solve == "R₁":
-        vout = st.number_input("Vout (V)", 0.0, vin, vin * r2 / (r1 + r2), 0.1, key="pd_vout_r1")
-        r1_calc = r2 * (vin / vout - 1) if vout > 0 else 0
-        st.success(f"**R₁ = {r1_calc:.2f} Ω**")
-    elif solve == "R₂":
-        vout = st.number_input("Vout (V)", 0.0, vin, vin * r2 / (r1 + r2), 0.1, key="pd_vout_r2")
-        r2_calc = r1 / (vin / vout - 1) if vout < vin else 0
-        st.success(f"**R₂ = {r2_calc:.2f} Ω**")
-    else:
-        vout = st.number_input("Vout (V)", 0.0, 100.0, vin * r2 / (r1 + r2), 0.1, key="pd_vout_vin")
-        r_total = r1 + r2
-        vin_calc = vout * r_total / r2 if r2 > 0 else 0
-        st.success(f"**Vin = {vin_calc:.4f} V**")
+    pot_pct = st.slider("Wiper position (%)", 0, 100, 67, 1, key="pd_pct",
+                         help="0% = wiper at bottom (Vout = 0), 100% = wiper at top (Vout = Vin)")
 
-    # Potentiometer mode
-    st.subheader("🔧 Potentiometer Mode")
-    pot_pct = st.slider("Wiper position (%)", 0, 100, 67, 1, help="0% = Vout = 0, 100% = Vout = Vin")
-    r2_pot = (pot_pct / 100) * (r1 + r2)
-    vout_pot = vin * r2_pot / (r1 + r2)
-    st.metric("Vout at wiper", f"{vout_pot:.3f} V")
+    # Calculate R₁ (above wiper), R₂ (below wiper), and Vout
+    r2_val = (pot_pct / 100) * r_total
+    r1_val = r_total - r2_val
+    vout_pot = vin * r2_val / r_total if r_total > 0 else 0
+
+    col_m1, col_m2, col_m3 = st.columns(3)
+    with col_m1:
+        st.metric("Vin", f"{vin:.2f} V")
+    with col_m2:
+        st.metric("Vout", f"{vout_pot:.3f} V")
+        ratio = (vout_pot / vin * 100) if vin > 0 else 0
+    with col_m3:
+        st.metric("Ratio", f"{ratio:.1f}%")
+
+    col_r1, col_r2 = st.columns(2)
+    with col_r1:
+        st.metric("R₁ (above wiper)", f"{r1_val:.0f} Ω")
+    with col_r2:
+        st.metric("R₂ (below wiper)", f"{r2_val:.0f} Ω")
 
     # Loading effect
     with st.expander("🔍 Loading Effect", expanded=False):
         rl = st.number_input("Load resistor R_L (Ω)", 0.0, 1e6, 10000.0, 100.0, key="pd_rl",
-                             help="Placed across R₂. Lower R_L = more loading = lower Vout")
+                             help="Connected across R₂ (below wiper). Lower R_L = more loading")
         if rl > 0:
-            r2_eff = 1 / (1 / r2 + 1 / rl) if r2 > 0 else 0
-            vout_loaded = vin * r2_eff / (r1 + r2_eff) if (r1 + r2_eff) > 0 else 0
+            r2_eff = 1 / (1 / r2_val + 1 / rl) if r2_val > 0 else 0
+            vout_loaded = vin * r2_eff / (r1_val + r2_eff) if (r1_val + r2_eff) > 0 else 0
             st.metric("Vout with load", f"{vout_loaded:.3f} V")
             st.metric("Effective R₂", f"{r2_eff:.2f} Ω")
             diff_pct = (1 - vout_loaded / vout_pot) * 100 if vout_pot > 0 else 0
-            st.info(f"📉 Vout dropped by {diff_pct:.1f}% due to loading")
+            if diff_pct > 0.5:
+                st.info(f"📉 Vout dropped by {diff_pct:.1f}% due to loading")
+            else:
+                st.success(f"✅ Minimal loading effect ({diff_pct:.1f}% drop)")
 
     # Circuit diagram SVG
-    pct = (vout_pot / vin * 100) if vin > 0 else 0
     # Wiper y-position: 0% = bottom (280), 100% = top (40)
-    wiper_y = 280 - (pct / 100) * 240
-    # R1 portion (above wiper) and R2 portion (below wiper) in %
-    r1_pct = pct
-    r2_pct = 100 - pct
+    wiper_y = 280 - (pot_pct / 100) * 240
 
     svg_circuit = f'''<svg viewBox="0 0 460 340" style="width:100%;max-width:460px;display:block;margin:0 auto;">
         <style>
@@ -652,12 +647,12 @@ elif topic == "Potential Divider":
         <text x="200" y="25" class="title" text-anchor="middle" font-size="13">Potentiometer</text>
 
         <!-- R₁ label (above wiper) -->
-        <text x="160" y="{40 + (wiper_y - 40) * 0.5 - 5}" class="title" text-anchor="end">R₁ = {r1:.0f} Ω</text>
-        <text x="160" y="{40 + (wiper_y - 40) * 0.5 + 8}" class="title" text-anchor="end">({r1_pct:.0f}%)</text>
+        <text x="150" y="{40 + (wiper_y - 40) * 0.5 - 5}" class="title" text-anchor="end">R₁ = {r1_val:.0f} Ω</text>
+        <text x="150" y="{40 + (wiper_y - 40) * 0.5 + 8}" class="title" text-anchor="end">({100 - pot_pct:.0f}%)</text>
 
         <!-- R₂ label (below wiper) -->
-        <text x="160" y="{wiper_y + (280 - wiper_y) * 0.5 - 5}" class="title" text-anchor="end">R₂ = {r2:.0f} Ω</text>
-        <text x="160" y="{wiper_y + (280 - wiper_y) * 0.5 + 8}" class="title" text-anchor="end">({r2_pct:.0f}%)</text>
+        <text x="150" y="{wiper_y + (280 - wiper_y) * 0.5 - 5}" class="title" text-anchor="end">R₂ = {r2_val:.0f} Ω</text>
+        <text x="150" y="{wiper_y + (280 - wiper_y) * 0.5 + 8}" class="title" text-anchor="end">({pot_pct:.0f}%)</text>
 
         <!-- Wiper label -->
         <text x="285" y="{wiper_y + 15}" class="label" fill="#10b981" font-size="10">Wiper</text>
