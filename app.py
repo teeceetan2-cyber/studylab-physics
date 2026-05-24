@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -675,7 +676,11 @@ elif topic == "Potential Divider":
         <polygon points="340,225 340,215 344,220" fill="#10b981" opacity="0.7"/>
     </svg>'''
 
-    st.markdown(f'<div style="text-align:center;background:#0f0f1a;border:1px solid #2a2a3a;border-radius:12px;padding:10px;margin:12px 0;">{svg_circuit}</div>', unsafe_allow_html=True)
+    components.html(
+        f'<div style="text-align:center;background:#0f0f1a;border:1px solid #2a2a3a;border-radius:12px;padding:10px;margin:12px 0;">{svg_circuit}</div>',
+        height=370,
+        scrolling=False,
+    )
 
     # Summary card
     v1 = vin - vout_pot
