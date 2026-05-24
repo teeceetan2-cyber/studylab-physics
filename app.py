@@ -600,12 +600,13 @@ elif topic == "Potential Divider":
 
     # Circuit diagram SVG
     pct = (vout_pot / vin * 100) if vin > 0 else 0
-    svg_circuit = f'''<svg viewBox="0 0 420 340" style="width:100%;max-width:420px;display:block;margin:0 auto;">
-        <defs>
-            <marker id="dot" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6">
-                <circle cx="5" cy="5" r="3" fill="#7c8cf0"/>
-            </marker>
-        </defs>
+    # Wiper y-position: 0% = bottom (280), 100% = top (40)
+    wiper_y = 280 - (pct / 100) * 240
+    # R1 portion (above wiper) and R2 portion (below wiper) in %
+    r1_pct = pct
+    r2_pct = 100 - pct
+
+    svg_circuit = f'''<svg viewBox="0 0 460 340" style="width:100%;max-width:460px;display:block;margin:0 auto;">
         <style>
             .wire {{ stroke: #7c8cf0; stroke-width: 2; fill: none; }}
             .label {{ fill: #aaa; font-size: 12px; font-family: sans-serif; }}
@@ -613,67 +614,53 @@ elif topic == "Potential Divider":
             .title {{ fill: #7c8cf0; font-size: 11px; font-family: sans-serif; }}
         </style>
 
-        <!-- Left vertical wire: top to bottom -->
-        <line x1="80" y1="40" x2="80" y2="280" class="wire"/>
+        <!-- Left vertical wire -->
+        <line x1="70" y1="40" x2="70" y2="280" class="wire"/>
 
-        <!-- Top wire: left to R1 -->
-        <line x1="80" y1="40" x2="140" y2="40" class="wire"/>
+        <!-- Top wire: left to potentiometer -->
+        <line x1="70" y1="40" x2="200" y2="40" class="wire"/>
 
-        <!-- R1 zigzag (between 140,40 and 260,40) -->
-        <polyline points="140,40 150,20 170,60 190,20 210,60 230,20 250,40 260,40" class="wire" stroke-width="2.5"/>
+        <!-- Potentiometer zigzag (single vertical component) -->
+        <polyline points="200,40 190,55 210,70 190,85 210,100 190,115 210,130 190,145 210,160 190,175 210,190 190,205 210,220 190,235 210,250 190,265 200,280" class="wire" stroke-width="2.5"/>
 
-        <!-- Wire from R1 to junction -->
-        <line x1="260" y1="40" x2="320" y2="40" class="wire"/>
-        <line x1="320" y1="40" x2="320" y2="130" class="wire"/>
+        <!-- Bottom wire -->
+        <line x1="200" y1="280" x2="70" y2="280" class="wire"/>
 
-        <!-- Junction dot -->
-        <circle cx="320" cy="40" r="4" fill="#7c8cf0"/>
+        <!-- Battery symbol (left) -->
+        <line x1="60" y1="55" x2="60" y2="100" stroke="#f0ad4e" stroke-width="3"/>
+        <line x1="55" y1="70" x2="65" y2="70" stroke="#f0ad4e" stroke-width="3"/>
+        <line x1="52" y1="85" x2="68" y2="85" stroke="#f0ad4e" stroke-width="3"/>
 
-        <!-- Top-right wire to Vout arrow -->
-        <line x1="320" y1="40" x2="380" y2="40" class="wire"/>
-        <polygon points="380,35 395,40 380,45" fill="#10b981"/>
+        <!-- Potentiometer wiper: arrow from right pointing to tap -->
+        <!-- Arrow head at the tap point on the zigzag -->
+        <line x1="280" y1="{wiper_y}" x2="215" y2="{wiper_y}" stroke="#10b981" stroke-width="2"/>
+        <polygon points="215,{wiper_y - 5} 205,{wiper_y} 215,{wiper_y + 5}" fill="#10b981"/>
+        <circle cx="200" cy="{wiper_y}" r="5" fill="#10b981"/>
 
-        <!-- R2 zigzag (vertical, between 320,130 and 320,210) -->
-        <polyline points="320,130 310,140 330,160 310,180 330,200 310,210 320,220" class="wire" stroke-width="2.5"/>
-
-        <!-- Wire from R2 to bottom -->
-        <line x1="320" y1="220" x2="320" y2="280" class="wire"/>
-        <!-- Bottom wire back to left -->
-        <line x1="80" y1="280" x2="320" y2="280" class="wire"/>
-
-        <!-- Battery symbol (left side) -->
-        <line x1="70" y1="55" x2="70" y2="100" stroke="#f0ad4e" stroke-width="3"/>
-        <line x1="65" y1="70" x2="75" y2="70" stroke="#f0ad4e" stroke-width="3"/>
-        <line x1="62" y1="85" x2="78" y2="85" stroke="#f0ad4e" stroke-width="3"/>
+        <!-- Vout wire from wiper to right -->
+        <line x1="280" y1="{wiper_y}" x2="410" y2="{wiper_y}" class="wire"/>
+        <polygon points="410,{wiper_y - 5} 425,{wiper_y} 410,{wiper_y + 5}" fill="#10b981"/>
 
         <!-- Labels -->
-        <text x="40" y="32" class="label" text-anchor="end">Vin</text>
-        <text x="40" y="48" class="val" text-anchor="end" fill="#f0ad4e">{vin:.1f} V</text>
-        <text x="398" y="36" class="label">Vout</text>
-        <text x="398" y="52" class="val" fill="#10b981">{vout_pot:.2f} V</text>
+        <text x="33" y="32" class="label" text-anchor="end">Vin</text>
+        <text x="33" y="48" class="val" text-anchor="end" fill="#f0ad4e">{vin:.1f} V</text>
 
-        <!-- R1 label above zigzag -->
-        <text x="200" y="18" class="title" text-anchor="middle">R₁</text>
-        <text x="200" y="72" class="val" text-anchor="middle" fill="#f59e0b">{r1:.0f} Ω</text>
-        <text x="200" y="86" class="title" text-anchor="middle">V = {vin - vout_pot:.2f} V</text>
+        <text x="430" y="{wiper_y - 8}" class="label" text-anchor="start">Vout</text>
+        <text x="430" y="{wiper_y + 8}" class="val" text-anchor="start" fill="#10b981">{vout_pot:.2f} V</text>
 
-        <!-- R2 label beside zigzag -->
-        <text x="338" y="180" class="title" text-anchor="start">R₂</text>
-        <text x="338" y="194" class="val" text-anchor="start" fill="#10b981">{r2:.0f} Ω</text>
-        <text x="338" y="208" class="title" text-anchor="start">V = {vout_pot:.2f} V</text>
+        <!-- Potentiometer label above zigzag -->
+        <text x="200" y="25" class="title" text-anchor="middle" font-size="13">Potentiometer</text>
 
-        <!-- Wiper position labels on R₂ -->
-        <text x="330" y="118" class="label" fill="#f59e0b" font-size="11">100% (Vout = {vin:.1f} V)</text>
-        <line x1="320" y1="125" x2="330" y2="125" stroke="#555" stroke-width="1" stroke-dasharray="3,3"/>
-        <circle cx="320" cy="125" r="3" fill="#f59e0b" opacity="0.5"/>
+        <!-- R₁ label (above wiper) -->
+        <text x="160" y="{40 + (wiper_y - 40) * 0.5 - 5}" class="title" text-anchor="end">R₁ = {r1:.0f} Ω</text>
+        <text x="160" y="{40 + (wiper_y - 40) * 0.5 + 8}" class="title" text-anchor="end">({r1_pct:.0f}%)</text>
 
-        <text x="330" y="305" class="label" fill="#ef4444" font-size="11">0% (Vout = 0 V)</text>
-        <line x1="320" y1="295" x2="330" y2="295" stroke="#555" stroke-width="1" stroke-dasharray="3,3"/>
-        <circle cx="320" cy="295" r="3" fill="#ef4444" opacity="0.5"/>
+        <!-- R₂ label (below wiper) -->
+        <text x="160" y="{wiper_y + (280 - wiper_y) * 0.5 - 5}" class="title" text-anchor="end">R₂ = {r2:.0f} Ω</text>
+        <text x="160" y="{wiper_y + (280 - wiper_y) * 0.5 + 8}" class="title" text-anchor="end">({r2_pct:.0f}%)</text>
 
-        <!-- Wiper arrow (current position) -->
-        <line x1="338" y1="{220 - (pct/100)*90}" x2="350" y2="{220 - (pct/100)*90}" stroke="#10b981" stroke-width="2"/>
-        <polygon points="350,{220 - (pct/100)*90 - 4} 358,{220 - (pct/100)*90} 350,{220 - (pct/100)*90 + 4}" fill="#10b981"/>
+        <!-- Wiper label -->
+        <text x="285" y="{wiper_y + 15}" class="label" fill="#10b981" font-size="10">Wiper</text>
     </svg>'''
 
     components.html(
