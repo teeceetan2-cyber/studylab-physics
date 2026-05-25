@@ -214,6 +214,103 @@ elif topic == "Momentum & Collisions":
                           margin=dict(l=20, r=20, t=10, b=20))
         st.plotly_chart(fig, use_container_width=True)
 
+        # ── Momentum vs Time graph ──
+        st.markdown("### Momentum vs Time")
+        # Time axis: 0 → 1 before collision, 1 → 2 after collision
+        t_before = np.linspace(0, 1, 50)
+        t_after = np.linspace(1, 2, 50)
+
+        p1_before = m1 * u1
+        p2_before = m2 * u2
+        p1_after = m1 * v1
+        p2_after = m2 * v2
+        p_total_val = p_before  # conserved
+
+        fig = go.Figure()
+
+        # Object 1 momentum: stepped
+        fig.add_trace(go.Scatter(
+            x=t_before, y=[p1_before] * len(t_before),
+            mode="lines", line=dict(color="#6366f1", width=3),
+            name=f"Object 1 (m₁={m1:.1f} kg)",
+            hovertemplate="Time: %{x:.2f} s<br>p₁ = %{y:.2f} kg·m/s<extra></extra>",
+        ))
+        fig.add_trace(go.Scatter(
+            x=t_after, y=[p1_after] * len(t_after),
+            mode="lines", line=dict(color="#6366f1", width=3),
+            showlegend=False,
+            hovertemplate="Time: %{x:.2f} s<br>p₁ = %{y:.2f} kg·m/s<extra></extra>",
+        ))
+        # Vertical line at collision for object 1
+        fig.add_trace(go.Scatter(
+            x=[1, 1], y=[p1_before, p1_after],
+            mode="lines", line=dict(color="#6366f1", width=2, dash="dot"),
+            showlegend=False,
+            hovertemplate="Collision<br>Δp₁ = {p1_after - p1_before:+.2f} kg·m/s<extra></extra>",
+        ))
+
+        # Object 2 momentum: stepped
+        fig.add_trace(go.Scatter(
+            x=t_before, y=[p2_before] * len(t_before),
+            mode="lines", line=dict(color="#10b981", width=3),
+            name=f"Object 2 (m₂={m2:.1f} kg)",
+            hovertemplate="Time: %{x:.2f} s<br>p₂ = %{y:.2f} kg·m/s<extra></extra>",
+        ))
+        fig.add_trace(go.Scatter(
+            x=t_after, y=[p2_after] * len(t_after),
+            mode="lines", line=dict(color="#10b981", width=3),
+            showlegend=False,
+            hovertemplate="Time: %{x:.2f} s<br>p₂ = %{y:.2f} kg·m/s<extra></extra>",
+        ))
+        # Vertical line at collision for object 2
+        fig.add_trace(go.Scatter(
+            x=[1, 1], y=[p2_before, p2_after],
+            mode="lines", line=dict(color="#10b981", width=2, dash="dot"),
+            showlegend=False,
+            hovertemplate="Collision<br>Δp₂ = {p2_after - p2_before:+.2f} kg·m/s<extra></extra>",
+        ))
+
+        # Total momentum (conserved)
+        fig.add_trace(go.Scatter(
+            x=[0, 2], y=[p_total_val, p_total_val],
+            mode="lines", line=dict(color="#f59e0b", width=2, dash="dash"),
+            name=f"Total p = {p_total_val:.2f} kg·m/s (conserved)",
+            hovertemplate="Time: %{x:.2f} s<br>p_total = %{y:.2f} kg·m/s<extra></extra>",
+        ))
+
+        # Collision zone annotation
+        fig.add_vrect(x0=0.95, x1=1.05, fillcolor="#ef4444", opacity=0.08,
+                       annotation_text="Collision", annotation_position="top",
+                       annotation_font=dict(size=11, color="#ef4444"))
+
+        fig.update_layout(
+            height=350,
+            xaxis=dict(title="Time (s)", range=[-0.1, 2.1], tickvals=[0, 0.5, 1, 1.5, 2]),
+            yaxis=dict(title="Momentum (kg·m/s)"),
+            plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
+            font_color="#ccc", margin=dict(l=20, r=20, t=10, b=30),
+            hovermode="x unified",
+            legend=dict(orientation="h", y=1.08, x=0, xanchor="left"),
+        )
+        st.plotly_chart(fig, use_container_width=True)
+
+        # Annotations for momentum change
+        dp1 = p1_after - p1_before
+        dp2 = p2_after - p2_before
+        st.markdown(f"""
+        <div style="display:flex;gap:16px;flex-wrap:wrap;">
+            <div style="background:#1a1d2a;padding:8px 14px;border-radius:8px;border-left:4px solid #6366f1;">
+                <b>Object 1</b>: Δp = {dp1:+.2f} kg·m/s
+            </div>
+            <div style="background:#1a1d2a;padding:8px 14px;border-radius:8px;border-left:4px solid #10b981;">
+                <b>Object 2</b>: Δp = {dp2:+.2f} kg·m/s
+            </div>
+            <div style="background:#1a1d2a;padding:8px 14px;border-radius:8px;border-left:4px solid #f59e0b;">
+                <b>Total</b>: Δp = {dp1 + dp2:.2f} kg·m/s (conserved ✓)
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
     elif mode == "2D Collision (With Angle)":
         st.markdown("### 2D Elastic Collision")
         st.markdown("Both balls adjustable. Set φ₁ (ball 1's deflection) — φ₂ is calculated.")
