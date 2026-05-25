@@ -662,40 +662,39 @@ elif topic == "Potential Divider":
         with col_r2:
             st.metric("R_fixed", f"{r_fixed:.0f} Ω")
 
-        # Variable resistor SVG: R_var (with arrow through zigzag) on top, R_fixed on bottom
-        # Total zigzag height: 240px. R_var portion = r_var/(r_var+r_fixed) * 240
-        vr_ratio = r_var / (r_var + r_fixed) if (r_var + r_fixed) > 0 else 0.5
-        split_y = int(280 - (1 - vr_ratio) * 240)  # Top of var resistor region
-        # Clamp to valid range
-        split_y = max(70, min(250, split_y))
-
+        # SVG with box-style resistor symbols
         svg_circuit = f'''<svg viewBox="0 0 460 340" style="width:100%;max-width:460px;display:block;margin:0 auto;">
             <style>
                 .wire {{ stroke: #7c8cf0; stroke-width: 2; fill: none; }}
                 .label {{ fill: #aaa; font-size: 12px; font-family: sans-serif; }}
                 .val {{ fill: #fff; font-size: 13px; font-weight: bold; font-family: sans-serif; }}
                 .title {{ fill: #7c8cf0; font-size: 11px; font-family: sans-serif; }}
+                .box {{ fill: #1a1d2a; stroke: #7c8cf0; stroke-width: 2; }}
             </style>
+            <!-- Left vertical wire -->
             <line x1="70" y1="40" x2="70" y2="280" class="wire"/>
-            <line x1="70" y1="40" x2="190" y2="40" class="wire"/>
+            <line x1="70" y1="40" x2="185" y2="40" class="wire"/>
 
-            <!-- Variable resistor zigzag (top portion) with arrow through it -->
-            <polyline points="190,40 180,55 200,70 180,85 200,100 180,115 200,130 180,145 200,160 180,175 200,190 180,205 200,220 180,235 200,250" class="wire" stroke-width="2.5"/>
-            <!-- Diagonal arrow through variable resistor -->
-            <line x1="175" y1="50" x2="215" y2="245" stroke="#f59e0b" stroke-width="2"/>
-            <polygon points="215,245 210,238 220,238" fill="#f59e0b"/>
+            <!-- Variable resistor: box + diagonal arrow -->
+            <rect x="180" y="50" width="40" height="155" class="box" fill="#2a1a0a" stroke="#f59e0b"/>
+            <!-- Arrow through the box -->
+            <line x1="175" y1="55" x2="225" y2="200" stroke="#f59e0b" stroke-width="2"/>
+            <polygon points="225,200 218,193 230,193" fill="#f59e0b"/>
 
+            <!-- Wire from var resistor to junction -->
+            <line x1="200" y1="205" x2="200" y2="215" class="wire"/>
             <!-- Junction dot -->
-            <circle cx="200" cy="250" r="4" fill="#7c8cf0"/>
+            <circle cx="200" cy="215" r="4" fill="#7c8cf0"/>
 
             <!-- Vout wire from junction to right -->
-            <line x1="200" y1="250" x2="410" y2="250" class="wire"/>
-            <polygon points="410,245 425,250 410,255" fill="#10b981"/>
+            <line x1="200" y1="215" x2="410" y2="215" class="wire"/>
+            <polygon points="410,210 425,215 410,220" fill="#10b981"/>
 
-            <!-- Fixed resistor zigzag (from junction down to bottom wire) -->
-            <line x1="200" y1="250" x2="200" y2="265" class="wire"/>
-            <polyline points="200,265 190,272 210,282 190,292 200,300" class="wire" stroke-width="2.5"/>
-            <line x1="200" y1="300" x2="200" y2="280" class="wire"/>
+            <!-- Fixed resistor: box only -->
+            <rect x="180" y="225" width="40" height="45" class="box" fill="#0a1a2a" stroke="#10b981"/>
+            <line x1="200" y1="270" x2="200" y2="280" class="wire"/>
+
+            <!-- Bottom wire -->
             <line x1="200" y1="280" x2="70" y2="280" class="wire"/>
 
             <!-- Battery -->
@@ -706,14 +705,14 @@ elif topic == "Potential Divider":
             <!-- Labels -->
             <text x="33" y="32" class="label" text-anchor="end">Vin</text>
             <text x="33" y="48" class="val" text-anchor="end" fill="#f0ad4e">{vin:.1f} V</text>
-            <text x="430" y="242" class="label" text-anchor="start">Vout</text>
-            <text x="430" y="258" class="val" text-anchor="start" fill="#10b981">{vout_vr:.2f} V</text>
+            <text x="430" y="207" class="label" text-anchor="start">Vout</text>
+            <text x="430" y="223" class="val" text-anchor="start" fill="#10b981">{vout_vr:.2f} V</text>
 
-            <text x="190" y="25" class="title" text-anchor="middle" font-size="13">Variable<br/>Resistor</text>
-            <text x="150" y="145" class="val" text-anchor="end" fill="#f59e0b">{r_var:.0f} Ω</text>
+            <text x="200" y="130" class="title" text-anchor="middle" fill="#f59e0b" font-size="12">R<sub>var</sub></text>
+            <text x="200" y="145" class="val" text-anchor="middle" fill="#f59e0b">{r_var:.0f} Ω</text>
 
-            <text x="215" y="275" class="title" text-anchor="start">Fixed<br/>Resistor</text>
-            <text x="215" y="292" class="val" text-anchor="start" fill="#10b981">{r_fixed:.0f} Ω</text>
+            <text x="230" y="243" class="title" text-anchor="start" fill="#10b981" font-size="12">R<sub>fixed</sub></text>
+            <text x="230" y="258" class="val" text-anchor="start" fill="#10b981">{r_fixed:.0f} Ω</text>
         </svg>'''
 
         components.html(
