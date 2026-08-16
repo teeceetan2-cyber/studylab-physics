@@ -975,8 +975,8 @@ elif topic == "Static Electricity (Coulomb)":
     <script>
     const cv=document.getElementById('cv'),ctx=cv.getContext('2d'),k=8.99e9;
     function draw(){
-      let q1=+q1.value,q2=+q2.value,d=+d.value;
-      lq1.textContent=q1;lq2.textContent=q2;ld.textContent=d;
+      let q1=+document.getElementById('q1').value,q2=+document.getElementById('q2').value,d=+document.getElementById('d').value;
+      document.getElementById('lq1').textContent=q1;document.getElementById('lq2').textContent=q2;document.getElementById('ld').textContent=d;
       ctx.clearRect(0,0,cv.width,cv.height);
       const cx=cv.width/2,cy=cv.height/2,half=(cv.width/2-90)*(d/20);
       const x1=cx-half,x2=cx+half;
@@ -999,7 +999,7 @@ elif topic == "Static Electricity (Coulomb)":
     function head(x,y,dir){ctx.fillStyle=ctx.strokeStyle;ctx.beginPath();
       if(dir==='r'){ctx.moveTo(x,y);ctx.lineTo(x-12,y-6);ctx.lineTo(x-12,y+6);}
       else{ctx.moveTo(x,y);ctx.lineTo(x+12,y-6);ctx.lineTo(x+12,y+6);}ctx.closePath();ctx.fill();}
-    [q1,q2,d].forEach(el=>el.addEventListener('input',draw));draw();
+    [document.getElementById('q1'),document.getElementById('q2'),document.getElementById('d')].forEach(el=>el.addEventListener('input',draw));draw();
     </script></body></html>
     """
     components.html(sim_html, height=460, scrolling=False)
@@ -1035,8 +1035,8 @@ elif topic == "Capacitor":
     <script>
     const cv=document.getElementById('cv'),ctx=cv.getContext('2d'),eps0=8.854e-12;
     function draw(){
-      let A=+document.getElementById('A').value,d=+document.getElementById('d').value,V=+document.getElementById('V').value,er=+er.value;
-      lA.textContent=A;ld.textContent=d;lV.textContent=V;
+      let A=+document.getElementById('A').value,d=+document.getElementById('d').value,V=+document.getElementById('V').value,er=+document.getElementById('er').value;
+      document.getElementById('lA').textContent=A;document.getElementById('ld').textContent=d;document.getElementById('lV').textContent=V;
       ctx.clearRect(0,0,cv.width,cv.height);
       const plW=200,plH=22,lx=cv.width/2-80,rx=cv.width/2+80,ty=cv.height/2-plH/2;
       ctx.fillStyle='#cbd5e1';
@@ -1056,7 +1056,7 @@ elif topic == "Capacitor":
     }
     function pchg(x,y,w,h,s){ctx.fillStyle=s>0?'#ef4444':'#3b82f6';ctx.font='10px sans-serif';
       for(let i=0;i<8;i++)ctx.fillText(s>0?'+':'−',x+8+i*(w/8),y+h/2+4);}
-    [document.getElementById('A'),document.getElementById('d'),document.getElementById('V'),er].forEach(el=>el.addEventListener('input',draw));draw();
+    [document.getElementById('A'),document.getElementById('d'),document.getElementById('V'),document.getElementById('er')].forEach(el=>el.addEventListener('input',draw));draw();
     </script></body></html>
     """
     # avoid JS id clash with Python globals: elements referenced as A_, d_, V_ in JS
