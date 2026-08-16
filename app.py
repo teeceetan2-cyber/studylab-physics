@@ -32,7 +32,8 @@ category = st.sidebar.selectbox("Category", [
 topic_map = {
     "🎯 Mechanics": ["Projectile Motion", "Kinematics", "Momentum & Collisions"],
     "💡 Optics": ["Snell's Law (Refraction)"],
-    "⚡ Electricity": ["Ohm's Law", "Potential Divider", "I-V Characteristics"],
+    "⚡ Electricity": ["Ohm's Law", "Potential Divider", "I-V Characteristics",
+                      "Static Electricity (Coulomb)", "Capacitor"],
     "🔄 Oscillations": ["Simple Pendulum"],
 }
 
@@ -944,6 +945,122 @@ elif topic == "I-V Characteristics":
             💡 **Filament lamp:** The curve shows current increasing less at higher voltages because
             the filament gets hotter → resistance increases. This is non-ohmic behavior.
             """)
+
+# ── Static Electricity (Coulomb) ──────────────────────────
+elif topic == "Static Electricity (Coulomb)":
+    st.markdown("## ⚡ Listrik Statis — Gaya Coulomb")
+    st.latex(r"F = k\frac{q_1 q_2}{d^2}")
+    st.info("Geser muatan jadi sejenis (++, −−) → tolak-menolak (oranye). "
+            "Berlawanan (+−) → tarik-menarik (hijau). Jarak makin jauh → gaya makin lemah (∝ 1/d²).")
+
+    sim_html = """
+    <!DOCTYPE html><html lang="id"><head><meta charset="utf-8">
+    <style>
+    body{margin:0;background:#0f172a;color:#e2e8f0;font-family:system-ui,Arial,sans-serif}
+    canvas{background:#0b1220;border-radius:10px;width:100%}
+    .row{display:flex;gap:8px;margin:6px 0;align-items:center;font-size:13px}
+    .row label{flex:1}
+    input[type=range]{flex:2}
+    .out{background:#0b1220;border-radius:8px;padding:8px;font-size:13px;margin-top:6px}
+    b{color:#38bdf8}
+    </style></head><body>
+    <canvas id="cv" width="640" height="320"></canvas>
+    <div class="row"><label>q₁ (nC): <b id="lq1">5</b></label>
+      <input id="q1" type="range" min="-10" max="10" value="5" step="1"></div>
+    <div class="row"><label>q₂ (nC): <b id="lq2">-5</b></label>
+      <input id="q2" type="range" min="-10" max="10" value="-5" step="1"></div>
+    <div class="row"><label>Jarak d (cm): <b id="ld">8</b></label>
+      <input id="d" type="range" min="2" max="20" value="8" step="1"></div>
+    <div class="out" id="out"></div>
+    <script>
+    const cv=document.getElementById('cv'),ctx=cv.getContext('2d'),k=8.99e9;
+    function draw(){
+      let q1=+q1.value,q2=+q2.value,d=+d.value;
+      lq1.textContent=q1;lq2.textContent=q2;ld.textContent=d;
+      ctx.clearRect(0,0,cv.width,cv.height);
+      const cx=cv.width/2,cy=cv.height/2,half=(cv.width/2-90)*(d/20);
+      const x1=cx-half,x2=cx+half;
+      ctx.strokeStyle='#334155';ctx.beginPath();ctx.moveTo(30,cy);ctx.lineTo(cv.width-30,cy);ctx.stroke();
+      chg(x1,cy,q1);chg(x2,cy,q2);
+      const Q1=q1*1e-9,Q2=q2*1e-9,r=d/100,F=Math.abs(k*Q1*Q2/(r*r));
+      const attract=q1*q2<0;
+      ctx.strokeStyle=attract?'#22c55e':'#f97316';ctx.lineWidth=3;
+      const ay=cy-60;ctx.beginPath();ctx.moveTo(x1,ay);ctx.lineTo(x2,ay);ctx.stroke();
+      head(x1,ay,attract?'r':'l');head(x2,ay,attract?'l':'r');
+      ctx.fillStyle=ctx.strokeStyle;ctx.font='12px sans-serif';
+      ctx.fillText(attract?'TARIK-MENARIK':'TOLAK-MENOLAK',cx-80,ay-8);
+      ctx.fillStyle='#e2e8f0';ctx.fillText('F = '+F.toExponential(2)+' N',cx-55,ay+18);
+      out.innerHTML='<b>F</b> = '+F.toExponential(2)+' N &nbsp;→ '+(attract?'Berlawanan: TARIK-MENARIK':'Sejenis: TOLAK-MENOLAK');
+    }
+    function chg(x,y,q){ctx.beginPath();ctx.arc(x,y,24,0,7);
+      ctx.fillStyle=q>0?'#ef4444':(q<0?'#3b82f6':'#64748b');ctx.fill();
+      ctx.fillStyle='#fff';ctx.font='bold 18px sans-serif';ctx.textAlign='center';
+      ctx.fillText(q>0?'+':'−',x,y+6);ctx.textAlign='left';}
+    function head(x,y,dir){ctx.fillStyle=ctx.strokeStyle;ctx.beginPath();
+      if(dir==='r'){ctx.moveTo(x,y);ctx.lineTo(x-12,y-6);ctx.lineTo(x-12,y+6);}
+      else{ctx.moveTo(x,y);ctx.lineTo(x+12,y-6);ctx.lineTo(x+12,y+6);}ctx.closePath();ctx.fill();}
+    [q1,q2,d].forEach(el=>el.addEventListener('input',draw));draw();
+    </script></body></html>
+    """
+    components.html(sim_html, height=460, scrolling=False)
+
+# ── Capacitor ─────────────────────────────────────────────
+elif topic == "Capacitor":
+    st.markdown("## 🔋 Kapasitor")
+    st.latex(r"C = \varepsilon_0 \, \varepsilon_r \frac{A}{d} \qquad Q = C\,V \qquad U = \tfrac{1}{2} C V^2")
+    st.info("A ↑ / d ↓ → C ↑. Dielektrik (εᵣ>1) menaikkan C. Muatan tersimpan Q ∝ C·V; energi U ∝ C·V².")
+
+    cap_html = """
+    <!DOCTYPE html><html lang="id"><head><meta charset="utf-8">
+    <style>
+    body{margin:0;background:#0f172a;color:#e2e8f0;font-family:system-ui,Arial,sans-serif}
+    canvas{background:#0b1220;border-radius:10px;width:100%}
+    .row{display:flex;gap:8px;margin:6px 0;align-items:center;font-size:13px}
+    .row label{flex:1}input[type=range]{flex:2}
+    select{flex:2;background:#1e293b;color:#e2e8f0;border:none;border-radius:6px;padding:4px}
+    .out{background:#0b1220;border-radius:8px;padding:8px;font-size:13px;margin-top:6px;line-height:1.7}
+    b{color:#38bdf8}
+    </style></head><body>
+    <canvas id="cv" width="640" height="320"></canvas>
+    <div class="row"><label>A (cm²): <b id="lA">100</b></label>
+      <input id="A" type="range" min="20" max="200" value="100" step="5"></div>
+    <div class="row"><label>d (mm): <b id="ld">5</b></label>
+      <input id="d" type="range" min="1" max="20" value="5" step="1"></div>
+    <div class="row"><label>V (V): <b id="lV">12</b></label>
+      <input id="V" type="range" min="1" max="24" value="12" step="1"></div>
+    <div class="row"><label>Dielektrik (εᵣ)</label>
+      <select id="er"><option value="1">Udara (1)</option><option value="2.5">Kertas (2.5)</option>
+      <option value="3">Plastik (3)</option><option value="80">Air (80)</option></select></div>
+    <div class="out" id="out"></div>
+    <script>
+    const cv=document.getElementById('cv'),ctx=cv.getContext('2d'),eps0=8.854e-12;
+    function draw(){
+      let A=+document.getElementById('A').value,d=+document.getElementById('d').value,V=+document.getElementById('V').value,er=+er.value;
+      lA.textContent=A;ld.textContent=d;lV.textContent=V;
+      ctx.clearRect(0,0,cv.width,cv.height);
+      const plW=200,plH=22,lx=cv.width/2-80,rx=cv.width/2+80,ty=cv.height/2-plH/2;
+      ctx.fillStyle='#cbd5e1';
+      ctx.fillRect(lx-plW/2,ty,plW/2,plH);ctx.fillRect(rx,ty,plW/2,plH);
+      pchg(lx-plW/2,ty,plW/2,plH,+1);pchg(rx,ty,plW/2,plH,-1);
+      const gap=rx-(lx-plW/2+plW/2);
+      ctx.fillStyle='rgba(56,189,248,'+(0.05*er)+')';ctx.fillRect(rx,ty,gap,plH);
+      ctx.strokeStyle='#38bdf8';ctx.lineWidth=1;
+      for(let i=0;i<5;i++){const y=ty+4+i*3.4;ctx.beginPath();ctx.moveTo(lx,y);ctx.lineTo(rx,y);ctx.stroke();}
+      ctx.fillStyle='#ef4444';ctx.fillText('+Q',lx-plW/2+8,ty+16);
+      ctx.fillStyle='#3b82f6';ctx.fillText('−Q',rx+8,ty+16);
+      const a=A*1e-4,dd=d*1e-3,C=eps0*er*a/dd,Q=C*V,E=V/dd,U=0.5*C*V*V;
+      out.innerHTML='Kapasitans <b>C</b> = '+(C*1e12).toFixed(2)+' pF<br>'+
+        'Muatan <b>Q</b> = '+(Q*1e9).toFixed(2)+' nC<br>'+
+        'Medan <b>E</b> = '+E.toFixed(0)+' V/m<br>'+
+        'Energi <b>U</b> = '+(U*1e12).toFixed(2)+' pJ';
+    }
+    function pchg(x,y,w,h,s){ctx.fillStyle=s>0?'#ef4444':'#3b82f6';ctx.font='10px sans-serif';
+      for(let i=0;i<8;i++)ctx.fillText(s>0?'+':'−',x+8+i*(w/8),y+h/2+4);}
+    [document.getElementById('A'),document.getElementById('d'),document.getElementById('V'),er].forEach(el=>el.addEventListener('input',draw));draw();
+    </script></body></html>
+    """
+    # avoid JS id clash with Python globals: elements referenced as A_, d_, V_ in JS
+    components.html(cap_html, height=470, scrolling=False)
 
 # ── FOOTER ────────────────────────────────────────────────
 st.markdown("---")
