@@ -950,11 +950,12 @@ elif topic == "I-V Characteristics":
 elif topic == "Static Electricity (Coulomb)":
     st.markdown("## ⚡ Static Electricity — Coulomb's Law")
     st.latex(r"F = k\frac{q_1 q_2}{r^2}")
-    st.info("Pick a layout: two charges in a line, three in a triangle, or four in a rectangle. "
-            "For the triangle set the three side lengths independently (equilateral, isosceles, or any scalene). "
-            "For the rectangle set width and height. Charges are coloured by sign (red = +, blue = −). "
-            "Like signs repel, opposite signs attract. The yellow arrow on each charge is the **net "
-            "(resultant) Coulomb force**, scaled relative to the largest force.")
+    st.info("Pick a layout: three charges in a line, three in a triangle, or four in a rectangle. "
+            "For the line, set the q1–q2 and q2–q3 distances. For the triangle set the three side lengths "
+            "independently (equilateral, isosceles, or any scalene). For the rectangle set width and height. "
+            "Charges are coloured by sign (red = +, blue = −). Like signs repel, opposite signs attract. "
+            "The yellow arrow on each charge is the **net (resultant) Coulomb force**, scaled relative to the "
+            "largest force. Dashed grey lines show every pairwise distance between charges (also listed below).")
 
     sim_html = """
     <!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
@@ -970,7 +971,7 @@ elif topic == "Static Electricity (Coulomb)":
     </style></head><body>
     <canvas id="cv" width="640" height="360"></canvas>
     <div class="row"><label>Layout</label>
-      <select id="layout"><option value="line">Two charges (line)</option>
+      <select id="layout"><option value="line">Three charges (line)</option>
         <option value="tri">Three charges (triangle)</option>
         <option value="sq">Four charges (rectangle)</option></select></div>
     <div class="row"><label>Show resultant for</label>
@@ -983,8 +984,10 @@ elif topic == "Static Electricity (Coulomb)":
       <input id="q3" type="range" min="-10" max="10" value="5" step="1"></div>
     <div class="row" id="rowq4"><label>q4 (nC): <b id="lq4">-5</b></label>
       <input id="q4" type="range" min="-10" max="10" value="-5" step="1"></div>
-    <div id="ctlLine"><div class="row"><label>Distance q1–q2 (cm): <b id="lsd">8</b></label>
-      <input id="sd" type="range" min="2" max="20" value="8" step="1"></div></div>
+    <div id="ctlLine"><div class="row"><label>Distance q1–q2 (cm): <b id="ls12">8</b></label>
+      <input id="s12" type="range" min="2" max="20" value="8" step="1"></div>
+      <div class="row"><label>Distance q2–q3 (cm): <b id="ls23">8</b></label>
+      <input id="s23" type="range" min="2" max="20" value="8" step="1"></div></div>
     <div id="ctlTri" style="display:none">
       <div class="row"><label>Side q1–q2 (cm): <b id="ls12">8</b></label>
         <input id="s12" type="range" min="2" max="20" value="8" step="1"></div>
@@ -1004,7 +1007,7 @@ elif topic == "Static Electricity (Coulomb)":
     const cv=document.getElementById('cv'),ctx=cv.getContext('2d'),k=8.99e9;
     const W=cv.width,H=cv.height,cx=W/2,cy=H/2;
     function sides(layout){
-      if(layout==='line'){const d=+document.getElementById('sd').value;return [[d,'sd','lsd'],[0,'',''],[0,'','']];}
+      if(layout==='line'){return [[+document.getElementById('s12').value,'s12','ls12'],[+document.getElementById('s23').value,'s23','ls23'],[0,'','']];}
       if(layout==='tri'){return [[+document.getElementById('s12').value,'s12','ls12'],[+document.getElementById('s13').value,'s13','ls13'],[+document.getElementById('s23').value,'s23','ls23']];}
       const w=+document.getElementById('sw').value,h=+document.getElementById('sh').value;return [[w,'sw','lsw'],[w,'sw','lsw'],[h,'sh','lsh'],[h,'sh','lsh']];
     }
@@ -1013,7 +1016,7 @@ elif topic == "Static Electricity (Coulomb)":
       const qs=[1,2,3,4].map(i=>+document.getElementById('q'+i).value);
       document.getElementById('lq1').textContent=qs[0];document.getElementById('lq2').textContent=qs[1];
       document.getElementById('lq3').textContent=qs[2];document.getElementById('lq4').textContent=qs[3];
-      document.getElementById('rowq3').style.display=(layout==='line')?'none':'flex';
+      document.getElementById('rowq3').style.display='flex';
       document.getElementById('rowq4').style.display=(layout==='sq')?'flex':'none';
       document.getElementById('ctlLine').style.display=(layout==='line')?'block':'none';
       document.getElementById('ctlTri').style.display=(layout==='tri')?'block':'none';
@@ -1028,7 +1031,7 @@ elif topic == "Static Electricity (Coulomb)":
       const baseline=Math.max(...Lvals);
       const pxPerM=(Math.min(W,H)/2-50)/baseline*100;
       let P;
-      if(layout==='line'){const dpx=(Math.min(W,H)/2-50)*Lvals[0]/Math.max(...Lvals);P=[[cx-dpx,cy],[cx+dpx,cy]];}
+      if(layout==='line'){const d12px=(Math.min(W,H)/2-50)*Lvals[0]/baseline,d23px=(Math.min(W,H)/2-50)*Lvals[1]/baseline;P=[[cx-d12px,cy],[cx,cy],[cx+d23px,cy]];}
       else if(layout==='tri'){
         const [a,b,c]=Lvals,sc=(Math.min(W,H)/2-50)/baseline;let px=(b*b+c*c-a*a)/(2*c),py=Math.sqrt(Math.max(0,b*b-px*px));
         P=[[cx-px*sc,cy+py*sc],[cx+(c-px)*sc,cy+py*sc],[cx+(c/2-px)*sc,cy-py*sc]];
@@ -1048,11 +1051,13 @@ elif topic == "Static Electricity (Coulomb)":
           ctx.fillStyle='#facc15';ctx.font='11px sans-serif';ctx.fillText('F='+m.toExponential(2)+'N',P[i][0]+ux*Lpx+4,P[i][1]+uy*Lpx-4);
         }
       }
+      for(let i=0;i<n;i++)for(let j=i+1;j<n;j++){if(layout==='line'&&j-i===2)continue;const rcm=Math.hypot(P[i][0]-P[j][0],P[i][1]-P[j][1])/pxPerM*100;const mx=(P[i][0]+P[j][0])/2,my=(P[i][1]+P[j][1])/2;ctx.strokeStyle='rgba(148,163,184,0.4)';ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(P[i][0],P[i][1]);ctx.lineTo(P[j][0],P[j][1]);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#94a3b8';ctx.font='10px sans-serif';ctx.fillText(rcm.toFixed(1)+' cm',mx+3,my-3);}
       let s='';for(let i=0;i<n;i++){const m=Math.hypot(fx[i],fy[i]);const deg=Math.atan2(fy[i],fx[i])*180/Math.PI;s+='<b>q'+(i+1)+'</b>: F = '+m.toExponential(2)+' N '+(m>1e-30?('('+deg.toFixed(0)+'°)')+'<br>':'<br>');}
+      s+='<br><b>Distances:</b> ';for(let i=0;i<n;i++)for(let j=i+1;j<n;j++){const rcm=Math.hypot(P[i][0]-P[j][0],P[i][1]-P[j][1])/pxPerM*100;s+='q'+(i+1)+'–q'+(j+1)+': '+rcm.toFixed(1)+' cm   ';}
       document.getElementById('out').innerHTML=s;
     }
     function chg(x,y,q){ctx.beginPath();ctx.arc(x,y,24,0,7);ctx.fillStyle=q>0?'#ef4444':(q<0?'#3b82f6':'#64748b');ctx.fill();ctx.strokeStyle='#0b1220';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='#fff';ctx.font='bold 18px sans-serif';ctx.textAlign='center';ctx.fillText(q>0?'+':'−',x,y+6);ctx.textAlign='left';}
-    [document.getElementById('layout'),document.getElementById('selCharge'),document.getElementById('q1'),document.getElementById('q2'),document.getElementById('q3'),document.getElementById('q4'),document.getElementById('sd'),document.getElementById('s12'),document.getElementById('s13'),document.getElementById('s23'),document.getElementById('sw'),document.getElementById('sh')].forEach(el=>el.addEventListener('input',draw));draw();
+    [document.getElementById('layout'),document.getElementById('selCharge'),document.getElementById('q1'),document.getElementById('q2'),document.getElementById('q3'),document.getElementById('q4'),document.getElementById('s12'),document.getElementById('s13'),document.getElementById('s23'),document.getElementById('sw'),document.getElementById('sh')].forEach(el=>el.addEventListener('input',draw));draw();
     </script></body></html>
     """
     components.html(sim_html, height=520, scrolling=False)
