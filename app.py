@@ -961,7 +961,7 @@ elif topic == "Static Electricity (Coulomb)":
     <!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
     <style>
     body{margin:0;background:#0f172a;color:#e2e8f0;font-family:system-ui,Arial,sans-serif}
-    canvas{background:#0b1220;border-radius:10px;width:100%}
+    canvas{background:#0b1220;border-radius:10px;max-width:640px;width:100%;height:auto}
     .row{display:flex;gap:8px;margin:6px 0;align-items:center;font-size:13px}
     .row label{flex:1}
     input[type=range]{flex:2}
@@ -1051,7 +1051,7 @@ elif topic == "Static Electricity (Coulomb)":
           ctx.fillStyle='#facc15';ctx.font='11px sans-serif';ctx.fillText('F='+m.toExponential(2)+'N',P[i][0]+ux*Lpx+4,P[i][1]+uy*Lpx-4);
         }
       }
-      for(let i=0;i<n;i++)for(let j=i+1;j<n;j++){if(layout==='line'&&j-i===2)continue;const rcm=Math.hypot(P[i][0]-P[j][0],P[i][1]-P[j][1])/pxPerM*100;const mx=(P[i][0]+P[j][0])/2,my=(P[i][1]+P[j][1])/2;ctx.strokeStyle='rgba(148,163,184,0.4)';ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(P[i][0],P[i][1]);ctx.lineTo(P[j][0],P[j][1]);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#94a3b8';ctx.font='10px sans-serif';ctx.fillText(rcm.toFixed(1)+' cm',mx+3,my-3);}
+      for(let i=0;i<n;i++)for(let j=i+1;j<n;j++){if(layout==='line'&&j-i===2)continue;const dpx=Math.hypot(P[i][0]-P[j][0],P[i][1]-P[j][1]),rcm=dpx/pxPerM*100;const mx=(P[i][0]+P[j][0])/2,my=(P[i][1]+P[j][1])/2;ctx.strokeStyle='rgba(226,232,240,0.95)';ctx.lineWidth=2;ctx.setLineDash([6,4]);ctx.beginPath();ctx.moveTo(P[i][0],P[i][1]);ctx.lineTo(P[j][0],P[j][1]);ctx.stroke();ctx.setLineDash([]);const t=rcm.toFixed(1)+' cm';ctx.font='bold 12px sans-serif';const tw=ctx.measureText(t).width;ctx.fillStyle='rgba(15,23,42,0.9)';ctx.fillRect(mx-tw/2-3,my-23,tw+6,16);ctx.fillStyle='#e2e8f0';ctx.textAlign='center';ctx.fillText(t,mx,my-10);ctx.textAlign='left';}
       let s='';for(let i=0;i<n;i++){const m=Math.hypot(fx[i],fy[i]);const deg=Math.atan2(fy[i],fx[i])*180/Math.PI;s+='<b>q'+(i+1)+'</b>: F = '+m.toExponential(2)+' N '+(m>1e-30?('('+deg.toFixed(0)+'°)')+'<br>':'<br>');}
       s+='<br><b>Distances:</b> ';for(let i=0;i<n;i++)for(let j=i+1;j<n;j++){const rcm=Math.hypot(P[i][0]-P[j][0],P[i][1]-P[j][1])/pxPerM*100;s+='q'+(i+1)+'–q'+(j+1)+': '+rcm.toFixed(1)+' cm   ';}
       document.getElementById('out').innerHTML=s;
@@ -1073,7 +1073,7 @@ elif topic == "Capacitor":
     <!DOCTYPE html><html lang="id"><head><meta charset="utf-8">
     <style>
     body{margin:0;background:#0f172a;color:#e2e8f0;font-family:system-ui,Arial,sans-serif}
-    canvas{background:#0b1220;border-radius:10px;width:100%}
+    canvas{background:#0b1220;border-radius:10px;max-width:640px;width:100%;height:auto}
     .row{display:flex;gap:8px;margin:6px 0;align-items:center;font-size:13px}
     .row label{flex:1}input[type=range]{flex:2}
     select{flex:2;background:#1e293b;color:#e2e8f0;border:none;border-radius:6px;padding:4px}
