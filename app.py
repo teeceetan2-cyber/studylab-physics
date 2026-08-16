@@ -948,67 +948,100 @@ elif topic == "I-V Characteristics":
 
 # ── Static Electricity (Coulomb) ──────────────────────────
 elif topic == "Static Electricity (Coulomb)":
-    st.markdown("## ⚡ Listrik Statis — Gaya Coulomb")
-    st.latex(r"F = k\frac{q_1 q_2}{d^2}")
-    st.info("Geser muatan jadi sejenis (++, −−) → tolak-menolak (oranye). "
-            "Berlawanan (+−) → tarik-menarik (hijau). Jarak makin jauh → gaya makin lemah (∝ 1/d²).")
+    st.markdown("## ⚡ Static Electricity — Coulomb's Law")
+    st.latex(r"F = k\frac{q_1 q_2}{r^2}")
+    st.info("Pick a layout: two charges in a line, three in a triangle, or four in a square. "
+            "Charges are coloured by sign (red = +, blue = −). Like signs repel, opposite signs attract. "
+            "The yellow arrow on each charge is the **net (resultant) Coulomb force**. "
+            "The faint blue grid shows the **electric field**.")
 
     sim_html = """
-    <!DOCTYPE html><html lang="id"><head><meta charset="utf-8">
+    <!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
     <style>
     body{margin:0;background:#0f172a;color:#e2e8f0;font-family:system-ui,Arial,sans-serif}
     canvas{background:#0b1220;border-radius:10px;width:100%}
     .row{display:flex;gap:8px;margin:6px 0;align-items:center;font-size:13px}
     .row label{flex:1}
     input[type=range]{flex:2}
-    .out{background:#0b1220;border-radius:8px;padding:8px;font-size:13px;margin-top:6px}
+    select{flex:2;background:#1e293b;color:#e2e8f0;border:none;border-radius:6px;padding:4px}
+    .out{background:#0b1220;border-radius:8px;padding:8px;font-size:13px;margin-top:6px;line-height:1.7}
     b{color:#38bdf8}
     </style></head><body>
-    <canvas id="cv" width="640" height="320"></canvas>
-    <div class="row"><label>q₁ (nC): <b id="lq1">5</b></label>
+    <canvas id="cv" width="640" height="340"></canvas>
+    <div class="row"><label>Layout</label>
+      <select id="layout"><option value="line">Two charges (line)</option>
+        <option value="tri">Three charges (triangle)</option>
+        <option value="sq">Four charges (square)</option></select></div>
+    <div class="row"><label>q1 (nC): <b id="lq1">5</b></label>
       <input id="q1" type="range" min="-10" max="10" value="5" step="1"></div>
-    <div class="row"><label>q₂ (nC): <b id="lq2">-5</b></label>
+    <div class="row"><label>q2 (nC): <b id="lq2">-5</b></label>
       <input id="q2" type="range" min="-10" max="10" value="-5" step="1"></div>
-    <div class="row"><label>Jarak d (cm): <b id="ld">8</b></label>
+    <div class="row" id="rowq3"><label>q3 (nC): <b id="lq3">5</b></label>
+      <input id="q3" type="range" min="-10" max="10" value="5" step="1"></div>
+    <div class="row" id="rowq4"><label>q4 (nC): <b id="lq4">-5</b></label>
+      <input id="q4" type="range" min="-10" max="10" value="-5" step="1"></div>
+    <div class="row"><label>Separation d (cm): <b id="ld">8</b></label>
       <input id="d" type="range" min="2" max="20" value="8" step="1"></div>
     <div class="out" id="out"></div>
     <script>
     const cv=document.getElementById('cv'),ctx=cv.getContext('2d'),k=8.99e9;
+    const W=cv.width,H=cv.height,cx=W/2,cy=H/2;
     function draw(){
-      let q1=+document.getElementById('q1').value,q2=+document.getElementById('q2').value,d=+document.getElementById('d').value;
-      document.getElementById('lq1').textContent=q1;document.getElementById('lq2').textContent=q2;document.getElementById('ld').textContent=d;
-      ctx.clearRect(0,0,cv.width,cv.height);
-      const cx=cv.width/2,cy=cv.height/2,half=(cv.width/2-90)*(d/20);
-      const x1=cx-half,x2=cx+half;
-      ctx.strokeStyle='#334155';ctx.beginPath();ctx.moveTo(30,cy);ctx.lineTo(cv.width-30,cy);ctx.stroke();
-      chg(x1,cy,q1);chg(x2,cy,q2);
-      const Q1=q1*1e-9,Q2=q2*1e-9,r=d/100,F=Math.abs(k*Q1*Q2/(r*r));
-      const attract=q1*q2<0;
-      ctx.strokeStyle=attract?'#22c55e':'#f97316';ctx.lineWidth=3;
-      const ay=cy-60;ctx.beginPath();ctx.moveTo(x1,ay);ctx.lineTo(x2,ay);ctx.stroke();
-      head(x1,ay,attract?'r':'l');head(x2,ay,attract?'l':'r');
-      ctx.fillStyle=ctx.strokeStyle;ctx.font='12px sans-serif';
-      ctx.fillText(attract?'TARIK-MENARIK':'TOLAK-MENOLAK',cx-80,ay-8);
-      ctx.fillStyle='#e2e8f0';ctx.fillText('F = '+F.toExponential(2)+' N',cx-55,ay+18);
-      out.innerHTML='<b>F</b> = '+F.toExponential(2)+' N &nbsp;→ '+(attract?'Berlawanan: TARIK-MENARIK':'Sejenis: TOLAK-MENOLAK');
+      const layout=document.getElementById('layout').value,d=+document.getElementById('d').value;
+      const qs=[1,2,3,4].map(i=>+document.getElementById('q'+i).value);
+      document.getElementById('lq1').textContent=qs[0];document.getElementById('lq2').textContent=qs[1];
+      document.getElementById('lq3').textContent=qs[2];document.getElementById('lq4').textContent=qs[3];
+      document.getElementById('ld').textContent=d;
+      document.getElementById('rowq3').style.display=(layout==='line')?'none':'flex';
+      document.getElementById('rowq4').style.display=(layout==='sq')?'flex':'none';
+      const n=(layout==='line')?2:(layout==='tri')?3:4;
+      const R=(Math.min(W,H)/2-60)*(d/20);
+      let P;
+      if(layout==='line')P=[[cx-R,cy],[cx+R,cy]];
+      else if(layout==='tri'){P=[];for(let i=0;i<3;i++){let a=(-90+i*120)*Math.PI/180;P.push([cx+R*Math.cos(a),cy+R*Math.sin(a)]);}}
+      else{P=[];const c=[[-1,-1],[1,-1],[1,1],[-1,1]];for(const v of c)P.push([cx+R*v[0],cy+R*v[1]]);}
+      const sep=(layout==='line')?2*R:(layout==='tri')?R*Math.sqrt(3):2*R;
+      const mpp=(d/100)/sep;
+      const Q=qs.slice(0,n).map(q=>q*1e-9);
+      ctx.clearRect(0,0,W,H);
+      for(let i=1;i<18;i++)for(let j=1;j<12;j++){
+        const px=W*i/18,py=H*j/12;let ex=0,ey=0,near=false;
+        for(let m=0;m<n;m++){const dx=px-P[m][0],dy=py-P[m][1],pr=Math.sqrt(dx*dx+dy*dy)||1;if(pr<20)near=true;const rm=pr*mpp;ex+=k*Q[m]*dx/(pr*rm*rm);ey+=k*Q[m]*dy/(pr*rm*rm);}
+        if(near)continue;const em=Math.hypot(ex,ey);if(em<1)continue;
+        const L=Math.min(22,Math.max(4,em*6e-4)),ux=ex/em,uy=ey/em;
+        ctx.strokeStyle='rgba(56,189,248,0.35)';ctx.lineWidth=1;
+        ctx.beginPath();ctx.moveTo(px-ux*L/2,py-uy*L/2);ctx.lineTo(px+ux*L/2,py+uy*L/2);ctx.stroke();
+        ctx.fillStyle='rgba(56,189,248,0.35)';ctx.beginPath();ctx.arc(px+ux*L/2,py+uy*L/2,1.5,0,7);ctx.fill();
+      }
+      const netF=[];
+      for(let i=0;i<n;i++){let fx=0,fy=0;for(let j=0;j<n;j++){if(j===i)continue;const dx=P[i][0]-P[j][0],dy=P[i][1]-P[j][1],pr=Math.sqrt(dx*dx+dy*dy)||1,rm=pr*mpp,F=k*Q[i]*Q[j]/(rm*rm);fx+=F*dx/pr;fy+=F*dy/pr;}netF.push([fx,fy]);}
+      for(let i=0;i<n;i++){
+        chg(P[i][0],P[i][1],qs[i]);
+        const fm=Math.hypot(netF[i][0],netF[i][1]);
+        if(fm>1e-30){const L=Math.min(120,Math.max(20,fm*1e7)),ux=netF[i][0]/fm,uy=netF[i][1]/fm;
+          ctx.strokeStyle='#facc15';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(P[i][0],P[i][1]);ctx.lineTo(P[i][0]+ux*L,P[i][1]+uy*L);ctx.stroke();
+          const hx=P[i][0]+ux*L,hy=P[i][1]+uy*L;ctx.fillStyle='#facc15';ctx.beginPath();
+          if(ux>=0){ctx.moveTo(hx,hy);ctx.lineTo(hx-12,hy-6);ctx.lineTo(hx-12,hy+6);}else{ctx.moveTo(hx,hy);ctx.lineTo(hx+12,hy-6);ctx.lineTo(hx+12,hy+6);}ctx.closePath();ctx.fill();
+          ctx.fillStyle='#facc15';ctx.font='11px sans-serif';ctx.fillText('F='+fm.toExponential(2)+'N',P[i][0]+ux*L+4,P[i][1]+uy*L-4);
+        }
+      }
+      let s='';
+      for(let i=0;i<n;i++){const fm=Math.hypot(netF[i][0],netF[i][1]);const deg=Math.atan2(netF[i][1],netF[i][0])*180/Math.PI;
+        s+='<b>q'+(i+1)+'</b>: F = '+fm.toExponential(2)+' N '+(fm>1e-30?('('+deg.toFixed(0)+'°)')+'<br>':'<br>');}
+      document.getElementById('out').innerHTML=s;
     }
-    function chg(x,y,q){ctx.beginPath();ctx.arc(x,y,24,0,7);
-      ctx.fillStyle=q>0?'#ef4444':(q<0?'#3b82f6':'#64748b');ctx.fill();
-      ctx.fillStyle='#fff';ctx.font='bold 18px sans-serif';ctx.textAlign='center';
-      ctx.fillText(q>0?'+':'−',x,y+6);ctx.textAlign='left';}
-    function head(x,y,dir){ctx.fillStyle=ctx.strokeStyle;ctx.beginPath();
-      if(dir==='r'){ctx.moveTo(x,y);ctx.lineTo(x-12,y-6);ctx.lineTo(x-12,y+6);}
-      else{ctx.moveTo(x,y);ctx.lineTo(x+12,y-6);ctx.lineTo(x+12,y+6);}ctx.closePath();ctx.fill();}
-    [document.getElementById('q1'),document.getElementById('q2'),document.getElementById('d')].forEach(el=>el.addEventListener('input',draw));draw();
+    function chg(x,y,q){ctx.beginPath();ctx.arc(x,y,24,0,7);ctx.fillStyle=q>0?'#ef4444':(q<0?'#3b82f6':'#64748b');ctx.fill();ctx.strokeStyle='#0b1220';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='#fff';ctx.font='bold 18px sans-serif';ctx.textAlign='center';ctx.fillText(q>0?'+':'−',x,y+6);ctx.textAlign='left';}
+    [document.getElementById('layout'),document.getElementById('q1'),document.getElementById('q2'),document.getElementById('q3'),document.getElementById('q4'),document.getElementById('d')].forEach(el=>el.addEventListener('input',draw));draw();
     </script></body></html>
     """
-    components.html(sim_html, height=460, scrolling=False)
+    components.html(sim_html, height=520, scrolling=False)
 
 # ── Capacitor ─────────────────────────────────────────────
 elif topic == "Capacitor":
-    st.markdown("## 🔋 Kapasitor")
+    st.markdown("## 🔋 Capacitor")
     st.latex(r"C = \varepsilon_0 \, \varepsilon_r \frac{A}{d} \qquad Q = C\,V \qquad U = \tfrac{1}{2} C V^2")
-    st.info("A ↑ / d ↓ → C ↑. Dielektrik (εᵣ>1) menaikkan C. Muatan tersimpan Q ∝ C·V; energi U ∝ C·V².")
+    st.info("Increase A or decrease d → C increases. A dielectric (εᵣ>1) raises C. "
+            "Stored charge Q ∝ C·V; energy U ∝ C·V².")
 
     cap_html = """
     <!DOCTYPE html><html lang="id"><head><meta charset="utf-8">
