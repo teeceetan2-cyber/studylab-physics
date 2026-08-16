@@ -984,10 +984,10 @@ elif topic == "Static Electricity (Coulomb)":
       <input id="q3" type="range" min="-10" max="10" value="5" step="1"></div>
     <div class="row" id="rowq4"><label>q4 (nC): <b id="lq4">-5</b></label>
       <input id="q4" type="range" min="-10" max="10" value="-5" step="1"></div>
-    <div id="ctlLine"><div class="row"><label>Distance q1–q2 (cm): <b id="ls12">8</b></label>
-      <input id="s12" type="range" min="2" max="20" value="8" step="1"></div>
-      <div class="row"><label>Distance q2–q3 (cm): <b id="ls23">8</b></label>
-      <input id="s23" type="range" min="2" max="20" value="8" step="1"></div></div>
+    <div id="ctlLine"><div class="row"><label>Distance q1–q2 (cm): <b id="ll12">8</b></label>
+      <input id="l12" type="range" min="2" max="20" value="8" step="1"></div>
+      <div class="row"><label>Distance q2–q3 (cm): <b id="ll23">8</b></label>
+      <input id="l23" type="range" min="2" max="20" value="8" step="1"></div></div>
     <div id="ctlTri" style="display:none">
       <div class="row"><label>Side q1–q2 (cm): <b id="ls12">8</b></label>
         <input id="s12" type="range" min="2" max="20" value="8" step="1"></div>
@@ -1007,7 +1007,7 @@ elif topic == "Static Electricity (Coulomb)":
     const cv=document.getElementById('cv'),ctx=cv.getContext('2d'),k=8.99e9;
     const W=cv.width,H=cv.height,cx=W/2,cy=H/2;
     function sides(layout){
-      if(layout==='line'){return [[+document.getElementById('s12').value,'s12','ls12'],[+document.getElementById('s23').value,'s23','ls23'],[0,'','']];}
+      if(layout==='line'){return [[+document.getElementById('l12').value,'l12','ll12'],[+document.getElementById('l23').value,'l23','ll23'],[0,'','']];}
       if(layout==='tri'){return [[+document.getElementById('s12').value,'s12','ls12'],[+document.getElementById('s13').value,'s13','ls13'],[+document.getElementById('s23').value,'s23','ls23']];}
       const w=+document.getElementById('sw').value,h=+document.getElementById('sh').value;return [[w,'sw','lsw'],[w,'sw','lsw'],[h,'sh','lsh'],[h,'sh','lsh']];
     }
@@ -1021,7 +1021,7 @@ elif topic == "Static Electricity (Coulomb)":
       document.getElementById('ctlLine').style.display=(layout==='line')?'block':'none';
       document.getElementById('ctlTri').style.display=(layout==='tri')?'block':'none';
       document.getElementById('ctlSq').style.display=(layout==='sq')?'block':'none';
-      const n=(layout==='line')?2:(layout==='tri')?3:4;
+      const n=(layout==='sq')?4:3;
       const sel=document.getElementById('selCharge');
       const want=(sel.value&&(sel.value==='all'||parseInt(sel.value.slice(1))<=n))?sel.value:'all';
       sel.innerHTML='<option value="all">All charges</option>'+Array.from({length:n},(_,i)=>'<option value="q'+(i+1)+'">q'+(i+1)+'</option>').join('');
@@ -1057,7 +1057,7 @@ elif topic == "Static Electricity (Coulomb)":
       document.getElementById('out').innerHTML=s;
     }
     function chg(x,y,q){ctx.beginPath();ctx.arc(x,y,24,0,7);ctx.fillStyle=q>0?'#ef4444':(q<0?'#3b82f6':'#64748b');ctx.fill();ctx.strokeStyle='#0b1220';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='#fff';ctx.font='bold 18px sans-serif';ctx.textAlign='center';ctx.fillText(q>0?'+':'−',x,y+6);ctx.textAlign='left';}
-    [document.getElementById('layout'),document.getElementById('selCharge'),document.getElementById('q1'),document.getElementById('q2'),document.getElementById('q3'),document.getElementById('q4'),document.getElementById('s12'),document.getElementById('s13'),document.getElementById('s23'),document.getElementById('sw'),document.getElementById('sh')].forEach(el=>el.addEventListener('input',draw));draw();
+    [document.getElementById('layout'),document.getElementById('selCharge'),document.getElementById('q1'),document.getElementById('q2'),document.getElementById('q3'),document.getElementById('q4'),document.getElementById('l12'),document.getElementById('l23'),document.getElementById('s12'),document.getElementById('s13'),document.getElementById('s23'),document.getElementById('sw'),document.getElementById('sh')].forEach(el=>el.addEventListener('input',draw));draw();
     </script></body></html>
     """
     components.html(sim_html, height=520, scrolling=False)
