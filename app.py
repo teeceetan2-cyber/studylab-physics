@@ -954,7 +954,7 @@ elif topic == "Static Electricity (Coulomb)":
             "For the triangle set the three side lengths independently (equilateral, isosceles, or any scalene). "
             "For the rectangle set width and height. Charges are coloured by sign (red = +, blue = −). "
             "Like signs repel, opposite signs attract. The yellow arrow on each charge is the **net "
-            "(resultant) Coulomb force**, scaled relative to the largest force. The faint blue grid is the **electric field**.")
+            "(resultant) Coulomb force**, scaled relative to the largest force.")
 
     sim_html = """
     <!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
@@ -973,6 +973,8 @@ elif topic == "Static Electricity (Coulomb)":
       <select id="layout"><option value="line">Two charges (line)</option>
         <option value="tri">Three charges (triangle)</option>
         <option value="sq">Four charges (rectangle)</option></select></div>
+    <div class="row"><label>Show resultant for</label>
+      <select id="selCharge"><option value="all">All charges</option><option value="q1">q1</option><option value="q2">q2</option></select></div>
     <div class="row"><label>q1 (nC): <b id="lq1">5</b></label>
       <input id="q1" type="range" min="-10" max="10" value="5" step="1"></div>
     <div class="row"><label>q2 (nC): <b id="lq2">-5</b></label>
@@ -1017,6 +1019,10 @@ elif topic == "Static Electricity (Coulomb)":
       document.getElementById('ctlTri').style.display=(layout==='tri')?'block':'none';
       document.getElementById('ctlSq').style.display=(layout==='sq')?'block':'none';
       const n=(layout==='line')?2:(layout==='tri')?3:4;
+      const sel=document.getElementById('selCharge');
+      const want=(sel.value&&(sel.value==='all'||parseInt(sel.value.slice(1))<=n))?sel.value:'all';
+      sel.innerHTML='<option value="all">All charges</option>'+Array.from({length:n},(_,i)=>'<option value="q'+(i+1)+'">q'+(i+1)+'</option>').join('');
+      sel.value=want;
       const S=sides(layout);for(let i=0;i<n;i++){if(S[i][1])document.getElementById(S[i][2]).textContent=S[i][0];}
       const Lvals=S.slice(0,n).map(s=>s[0]);
       const baseline=Math.max(...Lvals);
@@ -1031,19 +1037,11 @@ elif topic == "Static Electricity (Coulomb)":
       ctx.clearRect(0,0,W,H);
       let maxF=0;const fx=[],fy=[];
       for(let i=0;i<n;i++){let sx=0,sy=0;for(let j=0;j<n;j++){if(j===i)continue;const dx=P[i][0]-P[j][0],dy=P[i][1]-P[j][1],prPx=Math.hypot(dx,dy)||1,r=prPx/pxPerM,F=k*Q[i]*Q[j]/(r*r);sx+=F*dx/prPx;sy+=F*dy/prPx;}fx.push(sx);fy.push(sy);const m=Math.hypot(sx,sy);if(m>maxF)maxF=m;}
-      for(let i=1;i<18;i++)for(let j=1;j<13;j++){
-        const px=W*i/18,py=H*j/12;let ex=0,ey=0,near=false;
-        for(let m=0;m<n;m++){const dx=px-P[m][0],dy=py-P[m][1],prPx=Math.hypot(dx,dy)||1;if(prPx<22)near=true;const r=prPx/pxPerM;ex+=k*Q[m]*dx/(prPx*r*r);ey+=k*Q[m]*dy/(prPx*r*r);}
-        if(near)continue;const em=Math.hypot(ex,ey);if(em<1)continue;
-        const L=Math.min(20,Math.max(4,em/maxF*22)),ux=ex/em,uy=ey/em;
-        ctx.strokeStyle='rgba(56,189,248,0.35)';ctx.lineWidth=1;
-        ctx.beginPath();ctx.moveTo(px-ux*L/2,py-uy*L/2);ctx.lineTo(px+ux*L/2,py+uy*L/2);ctx.stroke();
-        ctx.fillStyle='rgba(56,189,248,0.35)';ctx.beginPath();ctx.arc(px+ux*L/2,py+uy*L/2,1.5,0,7);ctx.fill();
-      }
       for(let i=0;i<n;i++){
         chg(P[i][0],P[i][1],qs[i]);
         const m=Math.hypot(fx[i],fy[i]);
-        if(m>1e-30){const Lpx=30+m/maxF*90,ux=fx[i]/m,uy=fy[i]/m;
+        const show=(want==='all'||want==='q'+(i+1));
+        if(show&&m>1e-30){const Lpx=30+m/maxF*90,ux=fx[i]/m,uy=fy[i]/m;
           ctx.strokeStyle='#facc15';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(P[i][0],P[i][1]);ctx.lineTo(P[i][0]+ux*Lpx,P[i][1]+uy*Lpx);ctx.stroke();
           const hx=P[i][0]+ux*Lpx,hy=P[i][1]+uy*Lpx;ctx.fillStyle='#facc15';ctx.beginPath();
           if(ux>=0){ctx.moveTo(hx,hy);ctx.lineTo(hx-12,hy-6);ctx.lineTo(hx-12,hy+6);}else{ctx.moveTo(hx,hy);ctx.lineTo(hx+12,hy-6);ctx.lineTo(hx+12,hy+6);}ctx.closePath();ctx.fill();
@@ -1054,7 +1052,7 @@ elif topic == "Static Electricity (Coulomb)":
       document.getElementById('out').innerHTML=s;
     }
     function chg(x,y,q){ctx.beginPath();ctx.arc(x,y,24,0,7);ctx.fillStyle=q>0?'#ef4444':(q<0?'#3b82f6':'#64748b');ctx.fill();ctx.strokeStyle='#0b1220';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='#fff';ctx.font='bold 18px sans-serif';ctx.textAlign='center';ctx.fillText(q>0?'+':'−',x,y+6);ctx.textAlign='left';}
-    [document.getElementById('layout'),document.getElementById('q1'),document.getElementById('q2'),document.getElementById('q3'),document.getElementById('q4'),document.getElementById('sd'),document.getElementById('s12'),document.getElementById('s13'),document.getElementById('s23'),document.getElementById('sw'),document.getElementById('sh')].forEach(el=>el.addEventListener('input',draw));draw();
+    [document.getElementById('layout'),document.getElementById('selCharge'),document.getElementById('q1'),document.getElementById('q2'),document.getElementById('q3'),document.getElementById('q4'),document.getElementById('sd'),document.getElementById('s12'),document.getElementById('s13'),document.getElementById('s23'),document.getElementById('sw'),document.getElementById('sh')].forEach(el=>el.addEventListener('input',draw));draw();
     </script></body></html>
     """
     components.html(sim_html, height=520, scrolling=False)
