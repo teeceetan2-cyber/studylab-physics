@@ -1004,7 +1004,7 @@ elif topic == "Static Electricity (Coulomb)":
     function sides(layout){
       if(layout==='line'){const d=+document.getElementById('sd').value;return [[d,'sd','lsd'],[0,'',''],[0,'','']];}
       if(layout==='tri'){return [[+document.getElementById('s12').value,'s12','ls12'],[+document.getElementById('s13').value,'s13','ls13'],[+document.getElementById('s23').value,'s23','ls23']];}
-      const w=+document.getElementById('sw').value,h=+document.getElementById('sh').value;return [[w,'sw','lsw'],[w,'sw','lsw'],[h,'sh','lsh']];
+      const w=+document.getElementById('sw').value,h=+document.getElementById('sh').value;return [[w,'sw','lsw'],[w,'sw','lsw'],[h,'sh','lsh'],[h,'sh','lsh']];
     }
     function draw(){
       const layout=document.getElementById('layout').value;
@@ -1019,14 +1019,14 @@ elif topic == "Static Electricity (Coulomb)":
       const n=(layout==='line')?2:(layout==='tri')?3:4;
       const S=sides(layout);for(let i=0;i<n;i++){if(S[i][1])document.getElementById(S[i][2]).textContent=S[i][0];}
       const Lvals=S.slice(0,n).map(s=>s[0]);
+      const baseline=Math.max(...Lvals);
+      const pxPerM=(Math.min(W,H)/2-50)/baseline*100;
       let P;
       if(layout==='line'){const dpx=(Math.min(W,H)/2-50)*Lvals[0]/Math.max(...Lvals);P=[[cx-dpx,cy],[cx+dpx,cy]];}
       else if(layout==='tri'){
         const [a,b,c]=Lvals,sc=(Math.min(W,H)/2-50)/baseline;let px=(b*b+c*c-a*a)/(2*c),py=Math.sqrt(Math.max(0,b*b-px*px));
         P=[[cx-px*sc,cy+py*sc],[cx+(c-px)*sc,cy+py*sc],[cx+(c/2-px)*sc,cy-py*sc]];
       } else {const sc=(Math.min(W,H)/2-50)/Math.max(Lvals[0],Lvals[2]);P=[[cx-Lvals[0]*sc/2,cy-Lvals[2]*sc/2],[cx+Lvals[0]*sc/2,cy-Lvals[2]*sc/2],[cx+Lvals[0]*sc/2,cy+Lvals[2]*sc/2],[cx-Lvals[0]*sc/2,cy+Lvals[2]*sc/2]];}
-      const baseline=Math.max(...Lvals);
-      const pxPerM=(Math.min(W,H)/2-50)/baseline*100;
       const Q=qs.slice(0,n).map(q=>q*1e-9);
       ctx.clearRect(0,0,W,H);
       let maxF=0;const fx=[],fy=[];
